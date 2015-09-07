@@ -10,6 +10,4 @@ def open_matlab_file(matlab_filename):
             b = x
     return [['StimTrig', stim_trig_raw], [b, mat[b]]]
 
-#print(open_matlab_file('654508_rec02.mat')[0][1][0][0][4])
-for x in open_matlab_file('654508_rec02.mat')[0][1][0][0][4]:
-    print(x[0])
+print(open_matlab_file('654508_rec02.mat')[0][1][0][0][4])
