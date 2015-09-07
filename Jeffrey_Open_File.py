@@ -1,33 +1,15 @@
 import scipy.io as scio
 import matplotlib.pyplot as mpl
-mat = scio.loadmat('654508_rec02.mat')
-mat2 = scio.loadmat('654508_rec02_f01.mat')
 
-for x in mat.keys():
-    print(x, mat[x])
+def open_matlab_file(matlab_filename):
+    # headers of relevant data = 'StimTrig', b
+    mat = scio.loadmat(matlab_filename)
+    stim_trig_raw = mat['StimTrig']
+    for x in mat.keys():
+        if x != "__version__" and x != "__globals__" and x != "StimTrig" and x != "__header__":
+            b = x
+    return [['StimTrig', stim_trig_raw], [b, mat[b]]]
 
-# Keys: '__header__', 'Schmitt', 'StimTrig', '__globals__', '__version__', ONLY FOR '654508_rec02.mat'
-
-StimTrig_Raw = mat['StimTrig']
-StimTrig_Data = []
-Schmitt_Raw = mat['Schmitt']
-Schmitt_Data = []
-print(StimTrig_Raw)
-print(Schmitt_Raw)
-
-for x in StimTrig_Raw:
-    print(x[0][5])
-    for x_in in x[0][4]:
-        StimTrig_Data.append(x_in.tolist()[0])
-    for x_in in x[0][5]:
-        for x_in_in in x_in:
-            StimTrig_Data.append(x_in_in.tolist())
-print(StimTrig_Data)
-
-for x in Schmitt_Raw:
-    for x_in in x[0][4]:
-        Schmitt_Data.append(x_in.tolist()[0])
-print(Schmitt_Data)
-print()
-for x in mat2.keys():
-    print(x, mat2[x])
+#print(open_matlab_file('654508_rec02.mat')[0][1][0][0][4])
+for x in open_matlab_file('654508_rec02.mat')[0][1][0][0][4]:
+    print(x[0])
