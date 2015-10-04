@@ -31,7 +31,7 @@ StimTrig_Time = []
 StimTrig_Stimuli = []
 Sch_wav_Time = []
 
-file_name = '660804_rec03_all'
+file_name = '660802_rec03_all'
 
 # Pulls the timestamps in StimTrig into a list
 for x in open_matlab_file(file_name)[0][0][0][4]:
@@ -39,31 +39,87 @@ for x in open_matlab_file(file_name)[0][0][0][4]:
 
 # Pulls the order of stimuli from StimTrif into a list
 for x in open_matlab_file(file_name)[0][0][0][5]:
-    StimTrig_Stimuli.append(x[0])
+    if x[0] != 62:
+        StimTrig_Stimuli.append(x[0])
+    else:
+        StimTrig_Stimuli.append(0)
 
 # Pulls the timestamps of Sch_wav into a list
 for x in open_matlab_file(file_name)[1][0][0][4]:
     Sch_wav_Time.append(x[0])
 
-print("StimTrig_Time", StimTrig_Time)
-print("StimTrig_Stimuli", StimTrig_Stimuli)
-print("Sch_wav_Time", Sch_wav_Time)
+print("StimTrig_Time", len(StimTrig_Time), StimTrig_Time)
+print("StimTrig_Stimuli", len(StimTrig_Stimuli), StimTrig_Stimuli)
+print("Sch_wav_Time", len(Sch_wav_Time), Sch_wav_Time)
 
-# Playing around with frequency
+trial_dictionary = {}
+counter = 1
+for i,x in enumerate(StimTrig_Stimuli):
+    if x == 0:
+        trial_dictionary[counter] = i
+        counter += 1
 
-# average_frequency = float(len(Sch_wav_Time)/(float(Sch_wav_Time[-1])-float(Sch_wav_Time[1])))
-# print(average_frequency)
-# print(1/average_frequency)
-#
-# Total = 0
-# for i,x in enumerate(Sch_wav_Time):
-#     try:
-#         Total += (float(Sch_wav_Time[i+1])-float(x))
-#     except IndexError:
-#         break
-#
-# print((Total/(len(Sch_wav_Time)))-(1/average_frequency))
-# print((Total/(len(Sch_wav_Time)-1))-(1/average_frequency))
+Sch_wav_Time_Trialled = []
+Temporary_List = []
+Temporary_Key = 1
+for x in Sch_wav_Time:
+    try:
+        if x <= StimTrig_Time[trial_dictionary[Temporary_Key]]:
+            Temporary_List.append(x)
+        else:
+            Sch_wav_Time_Trialled.append(Temporary_List)
+            Temporary_List = []
+            Temporary_Key += 1
+    except KeyError:
+        break
+
+print(Sch_wav_Time_Trialled)
+
+#mpl.figure(num="Trial",figsize=[16.5,7.5])
+mpl.ioff()
+mpl.figure(num="Trial")
+mpl.show(block=False)
+
+for x in Sch_wav_Time_Trialled[0]:
+    mpl.plot([x,x], [0,10], "g-")
+mpl.plot(StimTrig_Time[0:trial_dictionary[1]+1], StimTrig_Stimuli[0:trial_dictionary[1]+1], 'ro')
+mpl.draw()
+
+while True:
+    user_selection = input("Trial: ")
+    if user_selection == "quit":
+        quit()
+    elif user_selection == "1":
+        mpl.cla()
+        mpl.plot(StimTrig_Time[0:trial_dictionary[1]+1], StimTrig_Stimuli[0:trial_dictionary[1]+1], 'ro')
+        for x in Sch_wav_Time_Trialled[int(user_selection)-1]:
+            mpl.plot([x,x], [0,10], "g-")
+        mpl.draw()
+    else:
+        mpl.cla()
+        mpl.plot(StimTrig_Time[trial_dictionary[int(user_selection)-1]:trial_dictionary[int(user_selection)]+1],
+                 StimTrig_Stimuli[trial_dictionary[int(user_selection)-1]:trial_dictionary[int(user_selection)]+1],
+                 'ro')
+        for x in Sch_wav_Time_Trialled[int(user_selection)-1]:
+            mpl.plot([x,x], [0,10], "g-")
+        mpl.draw()
+
+# total = 0
+# restriction = 0
+# show_list = []
+# for x in Sch_wav_Time:
+#     if x >= restriction and x < (restriction + 1):
+#         total += 1
+#     else:
+#         restriction += 1
+#         show_list.append(total)
+#         total = 1
+# show_list.append(total)
+# print(show_list)
+# total = 0
+# for x in show_list:
+#     total += x
+# print(total)
 
 # This commented section was used to pull the data into excel
 # It will write into a csv file (which can be converted to excel externally)
