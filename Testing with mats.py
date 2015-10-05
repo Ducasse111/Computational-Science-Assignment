@@ -2,6 +2,5 @@ __author__ = 'Ben'
 
 import scipy.io as sio
 
-contents = sio.loadmat("Test")
+contents = sio.loadmat("654508_rec02")
 trig = contents["StimTrig"]
-print(trig[0])
