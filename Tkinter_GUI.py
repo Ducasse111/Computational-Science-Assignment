@@ -1,4 +1,5 @@
 import tkinter as tk
+import matplotlib.pyplot as mpl
 
 import Graph
 ##bullsshit to make it commit
@@ -22,8 +23,9 @@ class Application(tk.Frame):
     def Create_Graph(self):
         TrialNum = self.TrialEntry.get()
         print(TrialNum)
+        mpl.close()
         StimTrig_Stimuli, StimTrig_Time, Sch_wav_Time, trial_dictionary, Sch_wav_Time_Trialled = Graph.open_matlab_file('660806_rec03_all')
-        Graph.trial_graphs(Sch_wav_Time_Trialled, StimTrig_Stimuli, StimTrig_Time, trial_dictionary)
+        Graph.trial_graphs(Sch_wav_Time_Trialled, StimTrig_Stimuli, StimTrig_Time, trial_dictionary, TrialNum)
 
 
 app = Application()

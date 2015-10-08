@@ -6,7 +6,7 @@ import matplotlib.pyplot as mpl
 
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
-os.chdir(os.getcwd()+"/Data_Input")
+os.chdir(os.getcwd()+"\\Data_Input")
 
 # Function task the name of the MatLab files (including the .mat at the end)
 # Error catching
@@ -102,13 +102,13 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
         mpl.show(block=False)
 
 StimTrig_Stimuli, StimTrig_Time, Sch_wav_Time, trial_dictionary, Sch_wav_Time_Trialled = open_matlab_file('660806_rec03_all')
-print(len(StimTrig_Stimuli))
+print(len(Sch_wav_Time))
 # the extra 50 comes from all the 0's (reset stimuli)
 
 # a = freqeuncy_before_stimulus(Sch_wav_Time, StimTrig_Stimuli, StimTrig_Time)
 # print(a[9][0], a[7][0])
 
-trial_graphs(Sch_wav_Time_Trialled, StimTrig_Stimuli, StimTrig_Time, trial_dictionary)
+# trial_graphs(Sch_wav_Time_Trialled, StimTrig_Stimuli, StimTrig_Time, trial_dictionary)
 
 # total = 0
 # restriction = 0
