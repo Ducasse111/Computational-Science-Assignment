@@ -7,6 +7,7 @@ import matplotlib.pyplot as mpl
 
 
 
+
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
 if sys.platform == ("win32" or "cygwin"):
@@ -19,9 +20,12 @@ elif sys.platform == "darwin":
 def open_matlab_file(matlab_filename):
     try:
         mat = scio.loadmat(matlab_filename, appendmat=True)
-    except FileNotFoundError:
-        print("File not found")
-        quit()
+    except:
+        try:
+            mat = scio.loadmat(matlab_filename, appendmat=False)
+        except FileNotFoundError:
+            print("File not found")
+            quit()
     b = scio.whosmat(matlab_filename)[0][0]
 
     stim_time = []
