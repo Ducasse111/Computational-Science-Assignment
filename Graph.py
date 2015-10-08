@@ -1,11 +1,12 @@
+import os
+
 import scipy.io as scio
 import matplotlib.pyplot as mpl
-import csv
-import os
+
 
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
-os.chdir(os.getcwd()+"\\Data_Input")
+os.chdir(os.getcwd()+"/Data_Input")
 
 # Function task the name of the MatLab files (including the .mat at the end)
 # Error catching
@@ -70,9 +71,9 @@ def freqeuncy_before_stimulus(firing_stamp, stimulus_type, stim_timestamp):
     return results
 
 # Error catching
-def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial):
+def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_selection = "1"):
+    user_selection = str(user_selection)
     mpl.ioff()
-    user_selection = input("Trial: ")
     if user_selection == "break":
         return
     elif user_selection == "quit":
