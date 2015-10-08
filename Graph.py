@@ -1,12 +1,18 @@
 import os
+import sys
 
 import scipy.io as scio
 import matplotlib.pyplot as mpl
 
 
+
+
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
-os.chdir(os.getcwd()+"\\Data_Input")
+if sys.platform == ("win32" or "cygwin"):
+    os.chdir(os.getcwd()+"\\Data_Input")
+elif sys.platform == "darwin":
+    os.chdir(os.getcwd()+"/Data_Input")
 
 # Function task the name of the MatLab files (including the .mat at the end)
 # Error catching
