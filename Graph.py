@@ -8,6 +8,7 @@ import matplotlib.pyplot as mpl
 
 
 
+
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
 if sys.platform == ("win32" or "cygwin"):
@@ -107,7 +108,7 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
                  'ko', ms=6)
         for i,x in enumerate(stimuli[dictionary_trial[int(user_selection)-1]:dictionary_trial[int(user_selection)]+1]):
             mpl.annotate(s=str(x), xy=(stimuli_time[i+dictionary_trial[int(user_selection)-1]],x), xytext=(stimuli_time[i+dictionary_trial[int(user_selection)-1]],10.2), color='0.2', size=13, weight="bold")
-        mpl.xlim(xmin=stimuli_time[dictionary_trial[int(user_selection)]], xmax=stimuli_time[dictionary_trial[int(user_selection)-1]])
+        mpl.xlim(xmin=stimuli_time[dictionary_trial[int(user_selection)-1]], xmax=stimuli_time[dictionary_trial[int(user_selection)]])
         mpl.draw()
         mpl.show(block=False)
 
