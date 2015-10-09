@@ -42,9 +42,9 @@ class Application(tk.Frame):
     def Create_Graph(self):
         TrialNum = self.TrialEntry.get()
         print(TrialNum)
-        mpl.close()
+        #mpl.close()
         if self.activefile != None:
-            StimTrig_Stimuli, StimTrig_Time, Sch_wav_Time, trial_dictionary, Sch_wav_Time_Trialled = Graph.open_matlab_file(self.activefile)
+            StimTrig_Stimuli, StimTrig_Time, Sch_wav_Time, trial_dictionary, Sch_wav_Time_Trialled, number_of_trials = Graph.open_matlab_file(self.activefile)
             Graph.trial_graphs(Sch_wav_Time_Trialled, StimTrig_Stimuli, StimTrig_Time, trial_dictionary, TrialNum)
             self.statustext = "Graphing"
             self.UpdateStatus()
