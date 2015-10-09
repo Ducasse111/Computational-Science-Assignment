@@ -8,9 +8,8 @@ class Application(tk.Frame):
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
         self.grid()
-        self.activefile = None
+        self.activefile = "Unloaded"
         self.add_widgets()
-
 
 
     def add_widgets(self):
@@ -36,16 +35,15 @@ class Application(tk.Frame):
         print(self.activefile)
         self.activefile = self.activefile[len(self.activefile)-1]
         if self.activefile != "":
-            self.statustext.insert("1.0","Opened file: \"" + self.activefile + "\"\n")
+            self.statustext.insert("1.0","Opened file: \n\"" + self.activefile + "\"\n")
 
 
     def Create_Graph(self, event):
-        self.statustext.insert("1.0","Graphing " + self.activefile + "\n")
         TrialNum = self.TrialEntry.get()
-        print(TrialNum)
-        #mpl.close()
+        self.statustext.insert("1.0","Attempting to graph trial "+TrialNum+" \nof file " + self.activefile + "\n")
         if self.activefile != None:
-            StimTrig_Stimuli, StimTrig_Time, Sch_wav_Time, trial_dictionary, Sch_wav_Time_Trialled, number_of_trials = Graph.open_matlab_file(self.activefile)
+            StimTrig_Stimuli, StimTrig_Time, Sch_wav_Time, trial_dictionary, Sch_wav_Time_Trialled, number_of_trials\
+                                                                            = Graph.open_matlab_file(self.activefile)
 
             try:
                 Graph.trial_graphs(Sch_wav_Time_Trialled, StimTrig_Stimuli, StimTrig_Time, trial_dictionary, TrialNum)
@@ -55,8 +53,6 @@ class Application(tk.Frame):
 
         else:
             self.statustext.insert("1.0","No File Selected\n")
-
-
 
 app = Application()
 app.master.title("Tkinter GUI V0.5")
