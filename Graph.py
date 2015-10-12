@@ -1,5 +1,7 @@
+# File Reference Number: 00
 import os
 import sys
+import io
 
 import scipy.io as scio
 import matplotlib.pyplot as mpl
@@ -8,6 +10,7 @@ import matplotlib.pyplot as mpl
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
 if sys.platform == ("win32" or "cygwin"):
     os.chdir(os.getcwd()+"\\Data_Input")
+
 elif sys.platform == "darwin":
     os.chdir(os.getcwd()+"/Data_Input")
 
@@ -22,14 +25,16 @@ def open_matlab_file(matlab_filename):
         except FileNotFoundError:
             print("File not found")
             quit()
-    b = scio.whosmat(matlab_filename)[0][0]
 
+    # Variable Declaration
+    b = scio.whosmat(matlab_filename)[0][0]
     number_trials = 0
     stim_time = []
     stim_code = []
     firing = []
     separate_dictionary = {}
     trialled_firing = []
+
     for x in mat['StimTrig'][0][0][4]:
         stim_time.append(x[0])
     for x in mat['StimTrig'][0][0][5]:
@@ -45,6 +50,7 @@ def open_matlab_file(matlab_filename):
         if x == 0:
             separate_dictionary[counter] = i
             counter += 1
+
     Temporary_List = []
     Temporary_Key = 1
     for x in firing:
@@ -62,8 +68,10 @@ def open_matlab_file(matlab_filename):
 # Function to find frequency of firing 200 milliseconds before stimuli applied
 # Iterate through firing list by popping items off
 def freqeuncy_before_stimulus(firing_stamp, stimulus_type, stim_timestamp):
+
     results = [[],[],[],[],[],[],[],[],[],[]]
     total = 0
+
     neuron_iterate = firing_stamp.pop(0)
     for i,x in enumerate(stimulus_type):
         if x != 0:
@@ -81,29 +89,46 @@ def freqeuncy_before_stimulus(firing_stamp, stimulus_type, stim_timestamp):
 # Error catching
 def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_selection = "1"):
     user_selection = str(user_selection)
+
     mpl.ioff()
     mpl.figure(num="Trial", figsize=[14,7])
-    mpl.show(block=False)
+    # mpl.show(block=False)
+
     if user_selection == "1":
         mpl.cla()
+
         for x in sch_wav_trials[int(user_selection)-1]:
             mpl.plot([x,x], [0,10], "r-")
         mpl.plot(stimuli_time[0:dictionary_trial[1]+1], stimuli[0:dictionary_trial[1]+1], 'ko', ms=6)
         for i,x in enumerate(stimuli[0:dictionary_trial[1]+1]):
             mpl.annotate(s=str(x), xy=(stimuli_time[i],x), xytext=(stimuli_time[i],10.2), color='0.2', size=13, weight="bold")
         mpl.xlim(xmin=0, xmax=stimuli_time[dictionary_trial[1]])
-        mpl.draw()
+
+        fig = mpl.gcf()
+
+        sio = io.BytesIO()
+        fig.savefig(sio, format='png')
+        return sio.getvalue()
+
     else:
         mpl.cla()
+
         for x in sch_wav_trials[int(user_selection)-1]:
             mpl.plot([x,x], [0,10], "r-")
+
         mpl.plot(stimuli_time[dictionary_trial[int(user_selection)-1]:dictionary_trial[int(user_selection)]+1],
                  stimuli[dictionary_trial[int(user_selection)-1]:dictionary_trial[int(user_selection)]+1],
                  'ko', ms=6)
+
         for i,x in enumerate(stimuli[dictionary_trial[int(user_selection)-1]:dictionary_trial[int(user_selection)]+1]):
             mpl.annotate(s=str(x), xy=(stimuli_time[i+dictionary_trial[int(user_selection)-1]],x), xytext=(stimuli_time[i+dictionary_trial[int(user_selection)-1]],10.2), color='0.2', size=13, weight="bold")
         mpl.xlim(xmin=stimuli_time[dictionary_trial[int(user_selection)-1]], xmax=stimuli_time[dictionary_trial[int(user_selection)]])
-        mpl.draw()
+
+        fig = mpl.gcf()
+
+        sio = io.BytesIO()
+        fig.savefig(sio, format='png')
+        return sio.getvalue()
 
 # a,b,c,d,e,f = open_matlab_file("660806_rec03_all")
 
