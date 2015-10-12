@@ -104,6 +104,9 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
             mpl.annotate(s=str(x), xy=(stimuli_time[i],x), xytext=(stimuli_time[i],10.2), color='0.2', size=13, weight="bold")
         mpl.xlim(xmin=0, xmax=stimuli_time[dictionary_trial[1]])
 
+        mpl.xlabel("Time (s)")
+        mpl.ylabel("Amplitude of Stimuli")
+
         fig = mpl.gcf()
 
         sio = io.BytesIO()
@@ -123,6 +126,9 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
         for i,x in enumerate(stimuli[dictionary_trial[int(user_selection)-1]:dictionary_trial[int(user_selection)]+1]):
             mpl.annotate(s=str(x), xy=(stimuli_time[i+dictionary_trial[int(user_selection)-1]],x), xytext=(stimuli_time[i+dictionary_trial[int(user_selection)-1]],10.2), color='0.2', size=13, weight="bold")
         mpl.xlim(xmin=stimuli_time[dictionary_trial[int(user_selection)-1]], xmax=stimuli_time[dictionary_trial[int(user_selection)]])
+
+        mpl.xlabel("Time (s)")
+        mpl.ylabel("Amplitude of Stimuli")
 
         fig = mpl.gcf()
 
