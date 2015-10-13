@@ -137,7 +137,7 @@ app.pack(fill="both", expand="YES")
 app.master.minsize(217, 217)
 app.mainloop()
 
-#temp
+#te
 # try:
 #     app = Application()
 #     app.master.title("Tkinter GUI V0.5")
