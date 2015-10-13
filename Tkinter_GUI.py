@@ -18,7 +18,7 @@ class Application(tk.Frame):
         self.NumberOfTrials = "Unknown"
         self.add_widgets()
         self.refresh_rate = 100
-        self.after(self.refresh_rate, self.update)
+        self.after(self.refresh_rate, self.check_update)
 
     # Function Reference: B
     def add_widgets(self):
@@ -65,7 +65,7 @@ class Application(tk.Frame):
         tk.Grid.columnconfigure(self, 4, weight=1)
         tk.Grid.rowconfigure(self, 3, weight=1)
 
-    def update(self):
+    def check_update(self):
         if self.raw_img is not None:
             if self.raw_img.width != self.panel.winfo_width() or self.raw_img.height != self.panel.winfo_height():
                 self.img = self.raw_img
@@ -75,7 +75,7 @@ class Application(tk.Frame):
 
                 self.panel.image = self.tkimage
                 self.panel.configure(image=self.tkimage)
-        self.after(self.refresh_rate, self.update)
+        self.after(self.refresh_rate, self.check_update)
 
     # Function Reference: C
     def browse(self):
@@ -137,7 +137,7 @@ app.pack(fill="both", expand="YES")
 app.master.minsize(217, 217)
 app.mainloop()
 
-#temp
+#te
 # try:
 #     app = Application()
 #     app.master.title("Tkinter GUI V0.5")
