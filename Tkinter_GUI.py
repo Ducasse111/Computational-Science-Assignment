@@ -14,9 +14,11 @@ class Application(tk.Frame):
     def __init__(self, master = None):
         tk.Frame.__init__(self, master)
         self.grid()
-        self.activefile = "Unloaded"
+        self.activefile = None
         self.NumberOfTrials = "Unknown"
         self.add_widgets()
+        self.refresh_rate = 50
+        self.after(self.refresh_rate, self.update)
 
     # Function Reference: B
     def add_widgets(self):
@@ -32,10 +34,13 @@ class Application(tk.Frame):
         self.TrialEntry = tk.Entry(self)
         self.TrialLabel = tk.Label(self, text="Trial Number:")
 
-        self.Graphbutton.grid(column=0, row=0, sticky="E"+"W")
+        self.statustext.configure(state='disabled')
+        self.Trialtext.configure(state='disabled')
+
+        self.BrowseButton.grid(column=0, row=0, sticky="E"+"W")
         self.TrialLabel.grid(column=0, row=1, sticky="E"+"W")
         self.TrialEntry.grid(column=0, row=2, sticky="E"+"W")
-        self.BrowseButton.grid(column=0, row=3, sticky="E"+"W")
+        self.Graphbutton.grid(column=0, row=3, sticky="E"+"W")
         self.Trialtext.grid(column=0, row=4, sticky="E"+"W")
         self.statustext.grid(column=0, row=5, sticky="E"+"W")
         self.quitButton.grid(column=0, row=6, sticky="E"+"W")
@@ -44,7 +49,7 @@ class Application(tk.Frame):
         self.Trialtext.insert("1.0", "Number of trials: " + self.NumberOfTrials + "\n")
 
         self.TrialEntry.bind('<Return>', self.create_graph)
-        self.bind('<Configure>', self.on_resize)
+        # self.bind('<Configure>', self.on_resize)
 
         self.image = None
         self.raw_img = None
@@ -52,15 +57,17 @@ class Application(tk.Frame):
         self.panel.grid(column=0, row=7, sticky="N"+"S"+"E"+"W")
         tk.Grid.rowconfigure(self, 7, weight=1)
 
-    def on_resize(self, event):
+    def update(self):
         if self.raw_img is not None:
-            self.img = self.raw_img
-            self.raw_img = self.img
-            self.img = self.img.resize((self.panel.winfo_width(), self.panel.winfo_height()), Image.ANTIALIAS)
-            self.tkimage = ImageTk.PhotoImage(self.img)
+            if self.raw_img.width != self.panel.winfo_width() or self.raw_img.height != self.panel.winfo_height():
+                self.img = self.raw_img
+                self.raw_img = self.img
+                self.img = self.img.resize((self.panel.winfo_width()-4, self.panel.winfo_height()-4), Image.ANTIALIAS)
+                self.tkimage = ImageTk.PhotoImage(self.img)
 
-            self.panel.image = self.tkimage
-            self.panel.configure(image=self.tkimage)
+                self.panel.image = self.tkimage
+                self.panel.configure(image=self.tkimage)
+        self.after(self.refresh_rate, self.update)
 
     # Function Reference: C
     def browse(self):
@@ -68,31 +75,59 @@ class Application(tk.Frame):
         self.activefile = self.activefile.split("/")
         self.activefile = self.activefile[len(self.activefile)-1]
         if self.activefile != "":
+
+            self.statustext.configure(state='normal')
             self.statustext.insert("1.0", "Opened file: \n\"" + self.activefile + "\"\n")
             self.StimTrig_Stimuli, self.StimTrig_Time, self.Sch_wav_Time, self.trial_dictionary,\
                 self.Sch_wav_Time_Trialled, self.number_of_trials = Graph.open_matlab_file(self.activefile)
+            self.statustext.configure(state='disabled')
+
+            self.Trialtext.configure(state='normal')
             self.Trialtext.insert("1.0", "Number of trials: " + str(self.number_of_trials) + "\n")
+            self.Trialtext.configure(state='disabled')
 
     # Function Reference: D
     def create_graph(self, event=None):
-        TrialNum = self.TrialEntry.get()
-        self.statustext.insert("1.0", "Attempting to graph trial "+TrialNum+" \nof file " + self.activefile + "\n")
         if self.activefile is not None:
-            try:
-                x = Graph.trial_graphs(self.Sch_wav_Time_Trialled, self.StimTrig_Stimuli, self.StimTrig_Time,
-                                   self.trial_dictionary, TrialNum)
-                self.img = Image.open(io.BytesIO(x))
-                self.raw_img = self.img
-                self.img = self.img.resize((self.panel.winfo_width(), self.panel.winfo_height()), Image.ANTIALIAS)
-                self.tkimage = ImageTk.PhotoImage(self.img)
+            TrialNum = self.TrialEntry.get()
 
-                self.panel.image = self.tkimage
-                self.panel.configure(image=self.tkimage)
-            except IndexError:
-                self.statustext.insert("1.0", "No such trial.\n")
+            self.statustext.configure(state='normal')
+            self.statustext.insert("1.0", "Attempting to graph trial "+TrialNum+" \nof file " + self.activefile + "\n")
+            self.statustext.configure(state='disabled')
+            if TrialNum != '':
+                try:
+                    x = Graph.trial_graphs(self.Sch_wav_Time_Trialled, self.StimTrig_Stimuli, self.StimTrig_Time,
+                                       self.trial_dictionary, TrialNum)
+                    self.img = Image.open(io.BytesIO(x))
+                    self.raw_img = self.img
+                    self.img = self.img.resize((self.panel.winfo_width()-4, self.panel.winfo_height()-4), Image.ANTIALIAS)
+                    self.tkimage = ImageTk.PhotoImage(self.img)
 
+                    self.panel.image = self.tkimage
+                    self.panel.configure(image=self.tkimage)
+                except KeyError:
+                    self.statustext.configure(state='normal')
+                    self.statustext.insert("1.0", "Trial out of range.\n")
+                    self.statustext.configure(state='disabled')
+            else:
+                self.statustext.configure(state='normal')
+                self.statustext.insert("1.0", "No trial selected.\n")
+                self.statustext.configure(state='disabled')
         else:
-            self.statustext.insert("1.0", "No File Selected\n")
+            self.statustext.configure(state='normal')
+            self.statustext.insert("1.0", "No file selected.\n")
+            self.statustext.configure(state='disabled')
+
+    # def on_resize(self, event):
+    #     if self.raw_img is not None:
+    #         if self.raw_img.width != self.panel.winfo_width() or self.raw_img.height != self.panel.winfo_height():
+    #             self.img = self.raw_img
+    #             self.raw_img = self.img
+    #             self.img = self.img.resize((self.panel.winfo_width(), self.panel.winfo_height()), Image.ANTIALIAS)
+    #             self.tkimage = ImageTk.PhotoImage(self.img)
+    #
+    #             self.panel.image = self.tkimage
+    #             self.panel.configure(image=self.tkimage)
 
 # Section Reference: B
 app = Application()
@@ -108,4 +143,3 @@ app.mainloop()
 #     app.mainloop()
 # except Exception as error:
 #     print("Error Caught: Code: 01-B", error)
-#some stuff to push across changes
