@@ -91,6 +91,10 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
     stimulied_firing.append(temporary_list)
     return stimulied_firing
 
+def probability_density_function_graph(firing_list, mean, sd):
+
+    return
+
 # Function to find frequency of firing 200 milliseconds before stimuli applied
 # Iterate through firing list by popping items off
 def individual_baseline_mean_sd(firing_stamp, stimulus_type, stim_timestamp):
