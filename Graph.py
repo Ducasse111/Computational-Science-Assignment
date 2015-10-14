@@ -70,11 +70,17 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
     trial_selection = int(trial_selection)
     stimulied_firing = []
     temporary_list = []
-    counter = 1
     if trial_selection == 1:
+        counter = 0
         for x in trialled_sch_wav[trial_selection-1]:
-            pass
+            if x <= stimtime[0:stim_dictionary[trial_selection]+1][counter]:
+                temporary_list.append(x)
+            else:
+                stimulied_firing.append(temporary_list)
+                temporary_list = [x]
+                counter += 1
     else:
+        counter = 1
         for x in trialled_sch_wav[trial_selection-1]:
             if x <= stimtime[stim_dictionary[trial_selection-1]:stim_dictionary[trial_selection]+1][counter]:
                 temporary_list.append(x)
@@ -156,17 +162,21 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
         fig.savefig(sio, format='png')
         return sio.getvalue()
 
-StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660806_rec03_all")
+StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660809_rec03_all")
 
-TrialSelect = 10
+TrialSelect = 1
 TestResult = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
 print(len(SchWavSplitIntoTrials[TrialSelect-1]), SchWavSplitIntoTrials[TrialSelect-1])
 Totes = 0
 for x in TestResult:
     Totes += len(x)
-print(Totes, TestResult)
-print(StimTrigTime[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
-print(StimTrig[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
+print(Totes, len(TestResult), TestResult)
+if TrialSelect != 1:
+    print(StimTrigTime[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
+    print(StimTrig[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
+else:
+    print(StimTrigTime[0:DictionaryMarkingResetStimuli[TrialSelect]+1])
+    print(StimTrig[0:DictionaryMarkingResetStimuli[TrialSelect]+1])
 
 # total = 0
 # restriction = 0
