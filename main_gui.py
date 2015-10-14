@@ -24,7 +24,7 @@ class Application(tk.Frame):
         self.refresh_rate = 100
         self.still_resizing = False
 
-        self.bind('<Configure>', self.on_resize)
+        # self.bind('<Configure>', self.on_resize)
 
         '''------------------
         Widget Instantiations
@@ -106,7 +106,7 @@ class Application(tk.Frame):
         self.rowconfigure(1, weight=2)
         self.columnconfigure(4, weight=1)
 
-        # Widget configurations
+        # Widget configurations)
         self.file_viewer.config(command=self.list_of_open_files.yview)
         self.trials.config(command=self.trial_listbox.yview)
 
@@ -152,9 +152,10 @@ class Application(tk.Frame):
         self.raw_image = Image.open(io.BytesIO(self.matlab_opened_files[self.selected_file].get_graph(self.selected_trial)))
         self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(), self.image_panel.winfo_height()), Image.ANTIALIAS)
 
-        self.image = ImageTk.PhotoImage(self.cur_image)
-        self.image_panel.image = self.image
-        self.image_panel.create_image(0, 0, anchor='nw', image=self.image)
+        self.cur_image = ImageTk.PhotoImage(self.cur_image)
+        self.image_panel.image = self.cur_image
+        self.image_panel.create_image(0, 0, anchor='nw', image=self.cur_image)
+
 
     def refresh(self):
         if self.raw_image is not None:
@@ -173,7 +174,19 @@ class Application(tk.Frame):
 
     # Unfinished
     def on_resize(self, event):
-        self.still_resizing = True
+        if self.raw_image is not None:
+            width, height = self.cur_image.size
+            if width != self.image_panel.winfo_width() or height != self.image_panel.winfo_height():
+                self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(), self.image_panel.winfo_height()), Image.ANTIALIAS)
+                self.image = ImageTk.PhotoImage(self.raw_image)
+
+                self.image_panel.image = self.image
+                self.image_panel.itemconfigure(self.image_panel, image=self.image)
+
+                self.after(100, self.refresh)
+                self.bind('<Configure>', None)
+            else:
+                self.bind('<Configure>', self.on_resize)
 
     # Unfinished
     def new_image_window(self, image_data_as_bytes):

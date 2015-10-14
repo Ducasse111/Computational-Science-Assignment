@@ -19,12 +19,12 @@ class GraphingApplication:
     def __init__(self):
         self.number_trials = 0
 
-        self.stimulus_time = []
-        self.stimulus_code = []
+        self.stimuli_time = []
+        self.stimuli_code = []
         self.firing = []
         self.trialled_firing = []
 
-        self.separate_dictionary = {}
+        self.dictionary = {}
 
         self.mat = None
 
@@ -54,26 +54,26 @@ class GraphingApplication:
         os.chdir(original_path)
 
         for x in self.mat['StimTrig'][0][0][4]:
-            self.stimulus_time.append(x[0])
+            self.stimuli_time.append(x[0])
         for x in self.mat['StimTrig'][0][0][5]:
             if x[0] != 62:
-                self.stimulus_code.append(x[0])
+                self.stimuli_code.append(x[0])
             else:
-                self.stimulus_code.append(0)
+                self.stimuli_code.append(0)
                 self.number_trials += 1
         for x in self.mat[temp_var][0][0][4]:
             self.firing.append(x[0])
         counter = 1
-        for i, x in enumerate(self.stimulus_code):
+        for i, x in enumerate(self.stimuli_code):
             if x == 0:
-                self.separate_dictionary[counter] = i
+                self.dictionary[counter] = i
                 counter += 1
 
         temp_list = []
         temp_key = 1
         for x in self.firing:
             try:
-                if x <= self.stimulus_time[self.separate_dictionary[temp_key]]:
+                if x <= self.stimuli_time[self.dictionary[temp_key]]:
                     temp_list.append(x)
                 else:
                     self.trialled_firing.append(temp_list)
@@ -83,31 +83,46 @@ class GraphingApplication:
                 break
 
     def get_graph(self, trial):
-        user_selection = trial
+        index = trial
+        if index == "1":
+            mpl.cla()
+            for x in self.trialled_firing[int(index)-1]:
+                mpl.plot([x, x], [0, 10], "r-")
 
-        mpl.ioff()
-        mpl.figure(num="Trial", figsize=[14, 7])
+            mpl.plot(self.stimuli_time[0:self.dictionary[1]+1],
+                     self.stimuli_code[0:self.dictionary[1]+1], 'ko', ms=6)
 
-        mpl.cla()
+            for i, x in enumerate(self.stimuli_code[0:self.dictionary[1]+1]):
+                mpl.annotate(s=str(x), xy=(self.stimuli_time[i], x),
+                             xytext=(self.stimuli_time[i], 10.2), color='0.2', size=13, weight="bold")
 
-        for x in self.trialled_firing[int(user_selection)-1]:
-            mpl.plot([x, x], [0, 10], "r-")
+            mpl.xlim(xmin=0, xmax=self.stimuli_time[self.dictionary[1]])
 
-        mpl.plot(self.stimulus_time[0:self.separate_dictionary[1]+1],
-                 self.stimulus_time[0:self.separate_dictionary[1]+1], 'ko', ms=6)
+            mpl.xlabel("Time (s)")
+            mpl.ylabel("Amplitude of Stimuli")
+        else:
+            mpl.cla()
 
-        for i, x in enumerate(self.stimulus_time[0:self.separate_dictionary[1]+1]):
-            mpl.annotate(s=str(x), xy=(self.stimulus_time[i], x), xytext=(self.stimulus_time[i], 10.2),
-                         color='0.2', size=13, weight='bold')
+            for x in self.trialled_firing[int(index)-1]:
+                mpl.plot([x, x], [0, 10], "r-")
 
-        mpl.xlim(xmin=0, xmax=self.stimulus_time[self.separate_dictionary[1]])
+            mpl.plot(self.stimuli_time[self.dictionary[int(index)]+1],
+                     self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
+                     'ko', ms=6)
 
-        mpl.xlabel('Time (s)')
-        mpl.ylabel('Amplitude of Stimuli')
+            for i, x in enumerate(self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1]):
+                mpl.annotate(s=str(x), xy=(self.stimuli_time[i+self.dictionary[int(index)-1]], x),
+                             xytext=(self.stimuli_time[i+self.dictionary[int(index)-1]], 10.2),
+                             color='0.2', size=13, weight="bold")
+
+            mpl.xlim(xmin=self.stimuli_time[self.dictionary[int(index)-1]],
+                     xmax=self.stimuli_time[self.dictionary[int(index)]])
+
+            mpl.xlabel("Time (s)")
+            mpl.ylabel("Amplitude of Stimuli")
 
         fig = mpl.gcf()
 
-        # Creates a buffer to export the data as bytes which is then used in PIL to draw the image from the bytes
-        image_io = io.BytesIO()
-        fig.savefig(image_io, format='png')
-        return image_io.getvalue()
+        sio = io.BytesIO()
+        fig.savefig(sio, format='png')
+        return sio.getvalue()
