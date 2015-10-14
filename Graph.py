@@ -5,6 +5,7 @@ import io
 
 import scipy.io as scio
 import matplotlib.pyplot as mpl
+import numpy as np
 
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
 # loadmat only looks in the current directory, thus this function changes the current directory to the Data folder
@@ -65,9 +66,38 @@ def open_matlab_file(matlab_filename):
             break
     return stim_code, stim_time, firing, separate_dictionary, trialled_firing, number_trials
 
+def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection = 1):
+    trial_selection = int(trial_selection)
+    stimulied_firing = []
+    temporary_list = []
+    if trial_selection == 1:
+        counter = 0
+        for x in trialled_sch_wav[trial_selection-1]:
+            if x <= stimtime[0:stim_dictionary[trial_selection]+1][counter]:
+                temporary_list.append(x)
+            else:
+                stimulied_firing.append(temporary_list)
+                temporary_list = [x]
+                counter += 1
+    else:
+        counter = 1
+        for x in trialled_sch_wav[trial_selection-1]:
+            if x <= stimtime[stim_dictionary[trial_selection-1]:stim_dictionary[trial_selection]+1][counter]:
+                temporary_list.append(x)
+            else:
+                stimulied_firing.append(temporary_list)
+                temporary_list = [x]
+                counter += 1
+    stimulied_firing.append(temporary_list)
+    return stimulied_firing
+
+def probability_density_function_graph(firing_list, mean, sd):
+
+    return
+
 # Function to find frequency of firing 200 milliseconds before stimuli applied
 # Iterate through firing list by popping items off
-def freqeuncy_before_stimulus(firing_stamp, stimulus_type, stim_timestamp):
+def individual_baseline_mean_sd(firing_stamp, stimulus_type, stim_timestamp):
 
     results = [[],[],[],[],[],[],[],[],[],[]]
     total = 0
@@ -136,12 +166,26 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
         fig.savefig(sio, format='png')
         return sio.getvalue()
 
-# a,b,c,d,e,f = open_matlab_file("660806_rec03_all")
+StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660809_rec03_all")
+
+TrialSelect = 1
+TestResult = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
+print(len(SchWavSplitIntoTrials[TrialSelect-1]), SchWavSplitIntoTrials[TrialSelect-1])
+Totes = 0
+for x in TestResult:
+    Totes += len(x)
+print(Totes, len(TestResult), TestResult)
+if TrialSelect != 1:
+    print(StimTrigTime[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
+    print(StimTrig[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
+else:
+    print(StimTrigTime[0:DictionaryMarkingResetStimuli[TrialSelect]+1])
+    print(StimTrig[0:DictionaryMarkingResetStimuli[TrialSelect]+1])
 
 # total = 0
 # restriction = 0
 # show_list = []
-# for x in Sch_wav_Time:
+# for x in fire:
 #     if x >= restriction and x < (restriction + 0.001):
 #         total += 1
 #     else:
@@ -157,5 +201,5 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
 #         highest = x
 #     total += x
 # print(total)
-# print(len(Sch_wav_Time))
+# print(len(fire))
 # print(highest)
