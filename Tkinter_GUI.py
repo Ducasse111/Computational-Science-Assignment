@@ -22,9 +22,6 @@ class Application(tk.Frame):
 
     # Function Reference: B
     def add_widgets(self):
-        # for rows in range(0, 7):
-        #     tk.Grid.rowconfigure(self, rows, weight=1)
-
         self.quitButton = tk.Button(self, text="Quit", command=self.quit)
         self.Graphbutton = tk.Button(self, text="Graph selected trial", command=self.create_graph)
         self.BrowseButton = tk.Button(self, text="Browse", command=self.browse)
