@@ -19,12 +19,12 @@ class Application(tk.Frame):
         self.master.title('Tkinter GUI Rewrite')
         self.grid()
         self.active_files = []
-        self.matlab_opened_files = {}
+        self.opened_files = {}
         self.listbox_data = {}
         self.refresh_rate = 100
         self.still_resizing = False
 
-        # self.bind('<Configure>', self.on_resize)
+        self.bind('<Configure>', self.on_resize)
 
         '''------------------
         Widget Instantiations
@@ -130,12 +130,15 @@ class Application(tk.Frame):
     def listbox_element_selected(self, event):
         widget = event.widget
         self.selected_file = widget.get(widget.curselection())
-        bin = [x for x in self.matlab_opened_files.keys()]
-        for rubbish in bin:
-            del self.matlab_opened_files[rubbish]
-        self.matlab_opened_files[self.selected_file] = graphing_api.GraphingApplication()
+        trashcan = []
+        for keys in self.opened_files.keys():
+            trashcan.append(keys)
+
+        for rubbish in trashcan:
+            del self.opened_files[rubbish]
+        self.opened_files[self.selected_file] = graphing_api.GraphingApplication()
         if self.selected_file is not None:
-            self.quick_load_file(self.matlab_opened_files[self.selected_file])
+            self.quick_load_file(self.opened_files[self.selected_file])
 
     # Finished : Working
     def quick_load_file(self, graphing_object):
@@ -149,19 +152,23 @@ class Application(tk.Frame):
     def base_gui_plot_trial(self, event):
         widget = event.widget
         self.selected_trial = widget.get(widget.curselection())
-        self.raw_image = Image.open(io.BytesIO(self.matlab_opened_files[self.selected_file].get_graph(self.selected_trial)))
-        self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(), self.image_panel.winfo_height()), Image.ANTIALIAS)
+        self.raw_image = Image.open(io.BytesIO(self.opened_files[
+                                               self.selected_file].get_graph(self.selected_trial)))
 
-        self.cur_image = ImageTk.PhotoImage(self.cur_image)
+        self.raw_image = self.raw_image.resize((self.image_panel.winfo_width(),
+                                                self.image_panel.winfo_height()), Image.ANTIALIAS)
+
+        self.cur_image = ImageTk.PhotoImage(self.raw_image)
         self.image_panel.image = self.cur_image
         self.image_panel.create_image(0, 0, anchor='nw', image=self.cur_image)
 
-
+    # Unfinished : Partially working
     def refresh(self):
         if self.raw_image is not None:
             width, height = self.cur_image.size
             if width != self.image_panel.winfo_width() or height != self.image_panel.winfo_height():
-                self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(), self.image_panel.winfo_height()), Image.ANTIALIAS)
+                self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(),
+                                                        self.image_panel.winfo_height()), Image.ANTIALIAS)
                 self.image = ImageTk.PhotoImage(self.raw_image)
 
                 self.image_panel.image = self.image
@@ -172,21 +179,19 @@ class Application(tk.Frame):
             else:
                 self.bind('<Configure>', self.on_resize)
 
-    # Unfinished
-    def on_resize(self, event):
+    # Unfinished : Partially working
+    def on_resize(self, event='<Configure>'):
         if self.raw_image is not None:
             width, height = self.cur_image.size
             if width != self.image_panel.winfo_width() or height != self.image_panel.winfo_height():
-                self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(), self.image_panel.winfo_height()), Image.ANTIALIAS)
+
+                self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(),
+                                                        self.image_panel.winfo_height()), Image.ANTIALIAS)
+
                 self.image = ImageTk.PhotoImage(self.raw_image)
 
                 self.image_panel.image = self.image
                 self.image_panel.itemconfigure(self.image_panel, image=self.image)
-
-                self.after(100, self.refresh)
-                self.bind('<Configure>', None)
-            else:
-                self.bind('<Configure>', self.on_resize)
 
     # Unfinished
     def new_image_window(self, image_data_as_bytes):

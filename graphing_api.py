@@ -106,7 +106,7 @@ class GraphingApplication:
             for x in self.trialled_firing[int(index)-1]:
                 mpl.plot([x, x], [0, 10], "r-")
 
-            mpl.plot(self.stimuli_time[self.dictionary[int(index)]+1],
+            mpl.plot(self.stimuli_time[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
                      self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
                      'ko', ms=6)
 
