@@ -1,6 +1,8 @@
 import io
+import os
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 
@@ -46,6 +48,8 @@ class Application(tk.Frame):
         self.file_menu = tk.Menu(self.menu, tearoff=False)
         self.file_menu.add_command(label='Browse', command=self.browse_file)
         self.file_menu.add_separator()
+        self.file_menu.add_command(label='Settings', command=None)
+        self.file_menu.add_separator()
         self.file_menu.add_command(label='Exit', command=self.quit)
 
         self.menu.add_cascade(label='File', menu=self.file_menu)
@@ -69,17 +73,67 @@ class Application(tk.Frame):
         self.file_viewer = tk.Scrollbar(self)
         self.trials = tk.Scrollbar(self)
 
-        self.trial_listbox = tk.Listbox(self, yscrollcommand=self.trials.set, width=5, selectmode='single')
-        self.list_of_open_files = tk.Listbox(self, yscrollcommand=self.file_viewer.set, width=20, selectmode='single')
+        self.trial_listbox = tk.Listbox(self, yscrollcommand=self.trials.set, width=6, activestyle='none',
+                                        selectmode='single', exportselection=False, highlightthickness=0)
+        self.list_of_open_files = tk.Listbox(self, yscrollcommand=self.file_viewer.set, activestyle='none',
+                                             width=24, selectmode='single', exportselection=False, highlightthickness=0)
 
         self.trial_listbox.bind('<Double-Button-1>', self.base_gui_plot_trial)
         self.list_of_open_files.bind('<Double-Button-1>', self.listbox_element_selected)
 
         #####################################################
+        # Scrollbar Toolbar
+        #####################################################
+
+        self.scrollbar_toolbar = tk.Frame(self)
+
+        self.browse_image = Image.open('icons\open.ico')
+        self.browse_image = self.browse_image.resize((16, 16), Image.ANTIALIAS)
+
+        self.delete_image = Image.open('icons\delete.png')
+        self.delete_image = self.delete_image.resize((16, 16), Image.ANTIALIAS)
+
+        self.up_image = Image.open('icons\\up.png')
+        self.up_image = self.up_image.resize((16, 16), Image.ANTIALIAS)
+
+        self.down_image = Image.open('icons\down.png')
+        self.down_image = self.down_image.resize((16, 16), Image.ANTIALIAS)
+
+        self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
+        self.tk_delete_image = ImageTk.PhotoImage(self.delete_image)
+        self.tk_up_image = ImageTk.PhotoImage(self.up_image)
+        self.tk_down_image = ImageTk.PhotoImage(self.down_image)
+
+        self.delete_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_delete_image,
+                                            command=self.unload_selected, relief='flat', padx=2, pady=2,
+                                            overrelief='groove', anchor='center')
+
+        self.up_button = tk.Button(self.scrollbar_toolbar, image=self.tk_up_image,
+                                   command=self.move_element_up, relief='flat', padx=2, pady=2,
+                                   overrelief='groove', anchor='center')
+
+        self.down_button = tk.Button(self.scrollbar_toolbar, image=self.tk_down_image,
+                                     command=self.move_element_down, relief='flat', padx=2, pady=2,
+                                     overrelief='groove', anchor='center')
+
+        self.browse_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_browse_image,
+                                            command=self.browse_file, relief='flat', padx=2, pady=2,
+                                            overrelief='groove', anchor='center')
+
+        ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
+        self.browse_file_button.pack(side='left')
+        self.delete_file_button.pack(side='left')
+        ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
+        self.up_button.pack(side='left')
+        self.down_button.pack(side='left')
+        ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='right', fill='y', padx=1)
+
+        #####################################################
         # Text Widget
         #####################################################
 
-        self.trial_text = tk.Label(self, text='Number of Trials: ')
+        self.trial_text = tk.Label(self, text='Number of Trials: ', width=40, anchor='w', relief='groove')
+        self.file_text = tk.Label(self, text='Selected File: ', width=40, anchor='w', relief='groove')
 
         #####################################################
         # Base Image Viewer
@@ -93,18 +147,19 @@ class Application(tk.Frame):
 
         # Grid instantiations
 
-        self.list_of_open_files.grid(row=0, rowspan=2, column=0, sticky='ns')
-        self.file_viewer.grid(row=0,        rowspan=2, column=1, sticky='ns')
-        self.trial_listbox.grid(row=0,      rowspan=2, column=2, sticky='ns')
-        self.trials.grid(row=0,             rowspan=2, column=3, sticky='ns')
-        self.trial_text.grid(row=0,                    column=4, sticky='we')
-        self.image_panel.grid(row=1,                   column=4, sticky='nsew')
+        self.scrollbar_toolbar.grid(row=0,             column=0, sticky='ew')
+        self.list_of_open_files.grid(row=1, rowspan=1, column=0, sticky='ns', padx=1, pady=1)
+        self.file_viewer.grid(row=1,        rowspan=1, column=1, sticky='ns', padx=1, pady=1)
+        self.trial_listbox.grid(row=1,      rowspan=1, column=2, sticky='ns', padx=1, pady=1)
+        self.trials.grid(row=1,             rowspan=1, column=3, sticky='ns', padx=1, pady=1)
+        self.file_text.grid(row=0,                     column=4, sticky='nsw', padx=2, pady=1)
+        self.trial_text.grid(row=0,                    column=5, sticky='nsew', padx=2, pady=1)
+        self.image_panel.grid(row=1,     columnspan=2, column=4, sticky='nsew')
 
         # Widget sticky and weighting
 
-        # self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=2)
-        self.columnconfigure(4, weight=1)
+        self.columnconfigure(5, weight=1)
 
         # Widget configurations)
         self.file_viewer.config(command=self.list_of_open_files.yview)
@@ -126,10 +181,41 @@ class Application(tk.Frame):
                 self.listbox_data[filename] = selected_file
         return
 
+    def move_element_up(self):
+        try:
+            selected = self.list_of_open_files.curselection()[0]
+            if selected != 0:
+                file = self.list_of_open_files.get(selected)
+                self.list_of_open_files.delete(selected)
+                self.list_of_open_files.insert(selected-1, file)
+                self.list_of_open_files.selection_clear(selected-1)
+                self.list_of_open_files.selection_set(selected-1)
+                self.active_files.insert(selected-1, self.active_files[selected])
+        except IndexError:
+            pass
+
+    def move_element_down(self):
+        try:
+            selected = self.list_of_open_files.curselection()[0]
+            if selected != self.list_of_open_files.size():
+                file = self.list_of_open_files.get(selected)
+                self.list_of_open_files.delete(selected)
+                self.list_of_open_files.insert(selected+1, file)
+                self.list_of_open_files.selection_clear(0, self.list_of_open_files.size())
+                self.list_of_open_files.selection_set(selected+1)
+                self.active_files.insert(selected+1, self.active_files[selected])
+        except IndexError:
+            pass
+
     # Finished : Working
     def listbox_element_selected(self, event):
+        self.image_panel.image = None
+        self.image_panel.create_image(0, 0, anchor='nw', image=None)
+
         widget = event.widget
         self.selected_file = widget.get(widget.curselection())
+        self.file_text.configure(text='Selected File: ' + str(self.selected_file))
+
         trashcan = []
         for keys in self.opened_files.keys():
             trashcan.append(keys)
@@ -194,6 +280,17 @@ class Application(tk.Frame):
     # Unfinished
     def new_file_window(self, file):
         pass
+
+    def unload_selected(self):
+        if self.list_of_open_files.curselection() is not None:
+            items = self.list_of_open_files.curselection()
+            pos = 0
+            for i in items:
+                idx = int(i) - pos
+                self.list_of_open_files.delete(idx, idx)
+                pos += 1
+
+            self.trial_listbox.delete(0, self.trial_listbox.size())
 
     @staticmethod
     def edit_text(textbox, text):
