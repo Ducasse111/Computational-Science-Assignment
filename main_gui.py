@@ -86,18 +86,19 @@ class Application(tk.Frame):
         #####################################################
 
         self.scrollbar_toolbar = tk.Frame(self)
+        self.i_size = (14, 14)
 
         self.browse_image = Image.open('icons\open.ico')
-        self.browse_image = self.browse_image.resize((16, 16), Image.ANTIALIAS)
+        self.browse_image = self.browse_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.delete_image = Image.open('icons\delete.png')
-        self.delete_image = self.delete_image.resize((16, 16), Image.ANTIALIAS)
+        self.delete_image = self.delete_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.up_image = Image.open('icons\\up.png')
-        self.up_image = self.up_image.resize((16, 16), Image.ANTIALIAS)
+        self.up_image = self.up_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.down_image = Image.open('icons\down.png')
-        self.down_image = self.down_image.resize((16, 16), Image.ANTIALIAS)
+        self.down_image = self.down_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
         self.tk_delete_image = ImageTk.PhotoImage(self.delete_image)
