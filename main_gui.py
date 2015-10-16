@@ -1,5 +1,5 @@
 import io
-import os
+import sys
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
@@ -48,7 +48,7 @@ class Application(tk.Frame):
         self.file_menu = tk.Menu(self.menu, tearoff=False)
         self.file_menu.add_command(label='Browse', command=self.browse_file)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label='Settings', command=None)
+        self.file_menu.add_command(label='Settings...', command=None)
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Exit', command=self.quit)
 
@@ -88,16 +88,22 @@ class Application(tk.Frame):
         self.scrollbar_toolbar = tk.Frame(self)
         self.i_size = (14, 14)
 
-        self.browse_image = Image.open('icons\open.ico')
+        if sys.platform == ("win32" or "cygwin"):
+            self.icon = 'icons\\'
+
+        elif sys.platform == "darwin":
+            self.icon = 'icons/'
+
+        self.browse_image = Image.open(self.icon+'open.ico')
         self.browse_image = self.browse_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.delete_image = Image.open('icons\delete.png')
+        self.delete_image = Image.open(self.icon+'delete.png')
         self.delete_image = self.delete_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.up_image = Image.open('icons\\up.png')
+        self.up_image = Image.open(self.icon+'up.png')
         self.up_image = self.up_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.down_image = Image.open('icons\down.png')
+        self.down_image = Image.open(self.icon+'down.png')
         self.down_image = self.down_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
@@ -291,7 +297,12 @@ class Application(tk.Frame):
                 self.list_of_open_files.delete(idx, idx)
                 pos += 1
 
+            self.list_of_open_files.selection_clear(0, self.list_of_open_files.size())
+            if self.list_of_open_files.size() > 0:
+                self.list_of_open_files.selection_set(items[0])
             self.trial_listbox.delete(0, self.trial_listbox.size())
+            self.trial_text.configure(text='Number of trials:')
+            self.file_text.configure(text='Selected File:')
 
     @staticmethod
     def edit_text(textbox, text):
