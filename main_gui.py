@@ -1,12 +1,22 @@
 import io
 import sys
+
 import tkinter as tk
+from tkinter import messagebox
 from tkinter import filedialog
 from tkinter import ttk
 
 from PIL import Image, ImageTk
 
 import graphing_api as graphing_api
+
+__Version__ = "0.1.0"
+#Edit this whenever you make a change, help us keep track.
+#           for a.b.c
+#           we change a when we add feature complete
+#           we change b when we add a new feature
+#           we change c when whenever we do a small fix
+
 
 
 class Application(tk.Frame):
@@ -18,7 +28,7 @@ class Application(tk.Frame):
         self.raw_image = None
         self.cur_image = None
         self.image = None
-        self.master.title('Tkinter GUI Rewrite')
+        self.master.title('Tkinter GUI Rewrite V'+ __Version__)
         self.grid()
         self.active_files = []
         self.opened_files = {}
@@ -61,8 +71,11 @@ class Application(tk.Frame):
         self.menu.add_cascade(label='View', menu=self.view_menu)
 
         # Help Cascade
+        def display_about():
+            messagebox.showinfo(message = "Created by:\nBen Witney, Martin Tran, Jeffrey Vo,\nJay Requizo, Aaron Jia\n\nVersion: "+ __Version__)
+
         self.help_menu = tk.Menu(self.menu, tearoff=False)
-        self.help_menu.add_command(label='About', command=None)
+        self.help_menu.add_command(label='About', command= display_about )
 
         self.menu.add_cascade(label='Help', menu=self.help_menu)
 
