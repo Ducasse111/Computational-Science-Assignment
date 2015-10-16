@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 
 import graphing_api
 
-__Version__ = "0.1.1"
+__Version__ = "0.1.2"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
