@@ -1,5 +1,5 @@
 import io
-import os
+import sys
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
@@ -88,16 +88,22 @@ class Application(tk.Frame):
         self.scrollbar_toolbar = tk.Frame(self)
         self.i_size = (14, 14)
 
-        self.browse_image = Image.open('icons\open.ico')
+        if sys.platform == ("win32" or "cygwin"):
+            self.icon = 'icons\\'
+
+        elif sys.platform == "darwin":
+            self.icon = 'icons/'
+
+        self.browse_image = Image.open(self.icon+'open.ico')
         self.browse_image = self.browse_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.delete_image = Image.open('icons\delete.png')
+        self.delete_image = Image.open(self.icon+'delete.png')
         self.delete_image = self.delete_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.up_image = Image.open('icons\\up.png')
+        self.up_image = Image.open(self.icon+'up.png')
         self.up_image = self.up_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.down_image = Image.open('icons\down.png')
+        self.down_image = Image.open(self.icon+'down.png')
         self.down_image = self.down_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
