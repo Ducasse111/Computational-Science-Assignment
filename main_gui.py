@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 
 import graphing_api
 
-__Version__ = "0.1.2"
+__Version__ = "0.3.0"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
@@ -27,11 +27,16 @@ class Application(tk.Frame):
         self.raw_image = None
         self.cur_image = None
         self.image = None
+        self.highlighted = None
+        self.new_window = None
         self.master.title('Tkinter GUI Rewrite V' + __Version__)
         self.grid()
         self.active_files = []
         self.opened_files = {}
         self.listbox_data = {}
+
+        self.loaded_trials = {}
+
         self.refresh_rate = 100
         self.being_rescaled = False
 
@@ -102,8 +107,9 @@ class Application(tk.Frame):
         self.list_of_open_files = tk.Listbox(self, yscrollcommand=self.file_viewer.set, activestyle='none',
                                              width=24, selectmode='single', exportselection=False, highlightthickness=0)
 
-        self.trial_listbox.bind('<Double-Button-1>', self.base_gui_plot_trial)
-        self.list_of_open_files.bind('<Double-Button-1>', self.listbox_element_selected)
+        self.trial_listbox.bind('<Double-1>', self.base_gui_plot_trial)
+        self.list_of_open_files.bind('<Double-1>', self.listbox_element_selected)
+        self.list_of_open_files.bind('<<ListboxSelect>>', self.set_active)
 
         #####################################################
         # Scrollbar Toolbar
@@ -130,10 +136,14 @@ class Application(tk.Frame):
         self.down_image = Image.open(self.icon+'down.png')
         self.down_image = self.down_image.resize(self.i_size, Image.ANTIALIAS)
 
+        self.window_open_image = Image.open(self.icon+'delete.png')
+        self.window_open_image = self.window_open_image.resize(self.i_size, Image.ANTIALIAS)
+
         self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
         self.tk_delete_image = ImageTk.PhotoImage(self.delete_image)
         self.tk_up_image = ImageTk.PhotoImage(self.up_image)
         self.tk_down_image = ImageTk.PhotoImage(self.down_image)
+        self.tk_window_open = ImageTk.PhotoImage(self.window_open_image)
 
         self.delete_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_delete_image,
                                             command=self.unload_selected, relief='flat', padx=2, pady=2,
@@ -147,6 +157,10 @@ class Application(tk.Frame):
                                      command=self.move_element_down, relief='flat', padx=2, pady=2,
                                      overrelief='groove', anchor='center')
 
+        self.window_open_button = tk.Button(self.scrollbar_toolbar, image=self.tk_window_open,
+                                            command=self.new_file_window, relief='flat', padx=2, pady=2,
+                                            overrelief='groove', anchor='center')
+
         self.browse_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_browse_image,
                                             command=self.browse_file, relief='flat', padx=2, pady=2,
                                             overrelief='groove', anchor='center')
@@ -157,6 +171,7 @@ class Application(tk.Frame):
         ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
         self.up_button.pack(side='left')
         self.down_button.pack(side='left')
+        self.window_open_button.pack(side='left')
         ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='right', fill='y', padx=1)
 
         #####################################################
@@ -245,8 +260,7 @@ class Application(tk.Frame):
         self.image_panel.image = None
         self.image_panel.create_image(0, 0, anchor='nw', image=None)
 
-        widget = event.widget
-        self.selected_file = widget.get(widget.curselection())
+        self.selected_file = self.list_of_open_files.get(self.list_of_open_files.curselection())
         self.file_text.configure(text='Selected File: ' + str(self.selected_file))
 
         trashcan = []
@@ -255,17 +269,14 @@ class Application(tk.Frame):
 
         for rubbish in trashcan:
             del self.opened_files[rubbish]
-
-        # self.opened_files[self.selected_file] = graphing_api.GraphingApplication()
-        # if self.selected_file is not None:
-        #     self.quick_load_file(self.opened_files[self.selected_file])
-
-        return self.selected_file
+        self.opened_files[self.selected_file] = graphing_api.GraphingApplication()
+        if self.selected_file is not None:
+            self.quick_load_file(self.opened_files[self.selected_file])
 
     # Finished : Working
     def quick_load_file(self, graphing_object):
         graphing_object.open_file(self.listbox_data[self.selected_file])
-        self.trial_text.configure(text='Number of trials: ' + str(graphing_object.number_trials))
+        self.trial_text.configure(text='Number of Trials: ' + str(graphing_object.number_trials))
         self.trial_listbox.delete(0, self.trial_listbox.size())
         for x in range(graphing_object.number_trials):
             self.trial_listbox.insert('end', str(x+1))
@@ -324,16 +335,112 @@ class Application(tk.Frame):
             self.trial_text.configure(text='Number of trials:')
             self.file_text.configure(text='Selected File:')
 
+    def set_active(self, event):
+        self.highlighted = self.list_of_open_files.get(self.list_of_open_files.curselection())
+
     # Unfinished
     def new_image_window(self, image_data_as_bytes):
         pass
 
     # Unfinished
-    def new_file_window(self, file):
-        pass
+    def new_file_window(self):
+        self.new_window = self.highlighted
 
     @staticmethod
     def edit_text(textbox, text):
         textbox.configure(state='normal')
         textbox.insert("1.0", text)
         textbox.configure(state='disabled')
+
+class SeparateWindowFile(tk.Frame):
+    def __init__(self, master=None, num_trials=0, file=None, data=None):
+        tk.Frame.__init__(self, master)
+        self.master = master
+        self.data = data
+        self.file = file
+        self.master.title('Trial Viewer ({})'.format(self.file))
+
+        # Toolbar
+        self.menu = tk.Menu(self.master)
+
+        try:
+            self.master.config(menu=self.menu)
+        except AttributeError:
+            # master is a top-level window (Python 1.4/Tkinter 1.63)
+            self.master.tk.call(master, "config", "-menu", self.menu)
+
+        # File Cascade
+        self.file_menu = tk.Menu(self.menu, tearoff=False)
+        self.file_menu.add_command(label='Settings...', command=None)
+        self.menu.add_cascade(label='File', menu=self.file_menu)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label='Exit', command=self.quit)
+
+        # Help Cascade
+        self.help_menu = tk.Menu(self.menu, tearoff=False)
+        self.help_menu.add_command(label='About', command=None)
+
+        self.menu.add_cascade(label='Help', menu=self.help_menu)
+
+        # Textbox
+        self.trial_text = tk.Label(self, text='Trial: ', width=40, anchor='w', relief='groove')
+
+        # Trial Viewer
+        self.trials = tk.Scrollbar(self)
+        self.trial_listbox = tk.Listbox(self, yscrollcommand=self.trials.set, width=6, activestyle='none',
+                                        selectmode='single', exportselection=False, highlightthickness=0)
+
+        for x in range(1, num_trials):
+            self.trial_listbox.insert('end', str(x))
+
+        self.trial_listbox.bind('<Double-1>', self.trial_selected)
+        self.trials.config(command=self.trial_listbox.yview)
+
+        # Toolbar
+        self.scrollbar_toolbar = tk.Frame(self)
+        if sys.platform == ("win32" or "cygwin"):
+            self.icon = 'icons\\'
+
+        elif sys.platform == "darwin":
+            self.icon = 'icons/'
+
+        self.delete_image = Image.open(self.icon+'delete.png')
+        self.delete_image = self.delete_image.resize((14, 14), Image.ANTIALIAS)
+        self.tk_delete_image = ImageTk.PhotoImage(self.delete_image)
+        self.delete_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_delete_image,
+                                            command=None, relief='flat', padx=2, pady=2,
+                                            overrelief='groove', anchor='center')
+
+        ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
+        self.delete_file_button.pack(side='left')
+
+        # Image Window
+        self.image_panel = tk.Canvas(self, height=600, width=1080, bg='white')
+
+        # Weight setup
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+
+        # Grid Setup
+        self.scrollbar_toolbar.grid(row=0, column=0, sticky='ew', pady=1)
+        self.trial_text.grid(row=0, column=2, sticky='ew', padx=1, pady=1)
+        self.trial_listbox.grid(row=1, column=0, sticky='ns', padx=1, pady=1)
+        self.trials.grid(row=1, column=1, sticky='ns', padx=1, pady=1)
+        self.image_panel.grid(row=1, column=2, sticky='nsew', padx=0, pady=0)
+
+    def loading_task(self):
+        pass
+
+    def trial_selected(self, event):
+        self.image_panel.image = None
+        widget = event.widget
+        self.selected_trial = widget.get(widget.curselection())
+        self.trial_text.configure(text='Trial: ' + self.selected_trial)
+        self.selected_image = self.data[str(self.selected_trial)]
+        self.raw_image = Image.open(io.BytesIO(self.selected_image))
+        self.selected_image = self.raw_image
+        self.selected_image = self.selected_image.resize((self.image_panel.winfo_width(), self.image_panel.winfo_height()), Image.ANTIALIAS)
+
+        self.image_tk = ImageTk.PhotoImage(self.selected_image)
+        self.image_panel.image = self.image_tk
+        self.image_panel.create_image(0, 0, anchor='nw', image=self.image_tk)

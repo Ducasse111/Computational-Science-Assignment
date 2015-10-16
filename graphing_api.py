@@ -82,7 +82,6 @@ class GraphingApplication:
                 break
 
     def get_graph(self, trial):
-        print(trial)
         index = trial
         if index == "1":
             mpl.cla()
@@ -124,7 +123,5 @@ class GraphingApplication:
         fig = mpl.gcf()
 
         sio = io.BytesIO()
-        fig.canvas.print_raw(sio)
-        val = sio.getvalue()
-        sio.close()
-        return val
+        fig.savefig(sio, format='png')
+        return sio.getvalue()
