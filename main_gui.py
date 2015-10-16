@@ -10,10 +10,10 @@ from PIL import Image, ImageTk
 
 import graphing_api as graphing_api
 
-__Version__ = "0.1.0"
+__Version__ = "0.1.1"
 #Edit this whenever you make a change, help us keep track.
 #           for a.b.c
-#           we change a when we add feature complete
+#           we change a when we finish a complete feature
 #           we change b when we add a new feature
 #           we change c when whenever we do a small fix
 
@@ -72,10 +72,22 @@ class Application(tk.Frame):
 
         # Help Cascade
         def display_about():
-            messagebox.showinfo(message = "Created by:\nBen Witney, Martin Tran, Jeffrey Vo,\nJay Requizo, Aaron Jia\n\nVersion: "+ __Version__)
+            text = "Created by:\n" \
+                   "Ben Witney\n" \
+                   "Martin Tran\n" \
+                   "Jeffrey Vo\n" \
+                   "Jay Requizo\n" \
+                   "Aaron Jia\n" \
+                   "\n" \
+                   "In Co-operation With:\n" \
+                   "John Monash Science School" \
+                   "\n"\
+                   "\n" \
+                   "Version: "
+            messagebox.showinfo(message=text + __Version__, title='About', icon='info')
 
         self.help_menu = tk.Menu(self.menu, tearoff=False)
-        self.help_menu.add_command(label='About', command= display_about )
+        self.help_menu.add_command(label='About', command=display_about)
 
         self.menu.add_cascade(label='Help', menu=self.help_menu)
 
@@ -99,13 +111,13 @@ class Application(tk.Frame):
         #####################################################
 
         self.scrollbar_toolbar = tk.Frame(self)
-        self.i_size = (14, 14)
-
         if sys.platform == ("win32" or "cygwin"):
             self.icon = 'icons\\'
 
         elif sys.platform == "darwin":
             self.icon = 'icons/'
+
+        self.i_size = (14, 14)
 
         self.browse_image = Image.open(self.icon+'open.ico')
         self.browse_image = self.browse_image.resize(self.i_size, Image.ANTIALIAS)
@@ -182,6 +194,7 @@ class Application(tk.Frame):
         self.columnconfigure(5, weight=1)
 
         # Widget configurations)
+
         self.file_viewer.config(command=self.list_of_open_files.yview)
         self.trials.config(command=self.trial_listbox.yview)
 
@@ -199,9 +212,9 @@ class Application(tk.Frame):
 
                 self.list_of_open_files.insert('end', filename)
                 self.listbox_data[filename] = selected_file
-        return
 
-    def move_element_up(self):
+    #  Finished : Working
+    def move_element_up(self, element):
         try:
             selected = self.list_of_open_files.curselection()[0]
             if selected != 0:
@@ -214,7 +227,8 @@ class Application(tk.Frame):
         except IndexError:
             pass
 
-    def move_element_down(self):
+    #  Finished : Working
+    def move_element_down(self, element):
         try:
             selected = self.list_of_open_files.curselection()[0]
             if selected != self.list_of_open_files.size():
@@ -254,7 +268,7 @@ class Application(tk.Frame):
         for x in range(graphing_object.number_trials):
             self.trial_listbox.insert('end', str(x+1))
 
-    # Unfinished
+    # Finished : Working
     def base_gui_plot_trial(self, event):
         widget = event.widget
         self.selected_trial = widget.get(widget.curselection())
@@ -269,7 +283,7 @@ class Application(tk.Frame):
         self.image_panel.image = self.image
         self.image_panel.create_image(0, 0, anchor='nw', image=self.image)
 
-    # Unfinished : Partially working
+    # Finished : Working
     def refresh(self):
         if self.raw_image is not None:
             width, height = self.cur_image.size
@@ -284,23 +298,13 @@ class Application(tk.Frame):
                 self.image_panel.create_image(0, 0, anchor='nw', image=self.image)
         self.being_rescaled = False
 
-    # Unfinished : Partially working
+    # Finished : Working
     def on_resize(self, event):
-        go_away_python = event
-        del go_away_python
-
         if not self.being_rescaled:
             self.being_rescaled = True
             self.after(100, self.refresh)
 
-    # Unfinished
-    def new_image_window(self, image_data_as_bytes):
-        pass
-
-    # Unfinished
-    def new_file_window(self, file):
-        pass
-
+    # Finished : Working
     def unload_selected(self):
         if self.list_of_open_files.curselection() is not None:
             items = self.list_of_open_files.curselection()
@@ -316,6 +320,14 @@ class Application(tk.Frame):
             self.trial_listbox.delete(0, self.trial_listbox.size())
             self.trial_text.configure(text='Number of trials:')
             self.file_text.configure(text='Selected File:')
+
+    # Unfinished
+    def new_image_window(self, image_data_as_bytes):
+        pass
+
+    # Unfinished
+    def new_file_window(self, file):
+        pass
 
     @staticmethod
     def edit_text(textbox, text):
