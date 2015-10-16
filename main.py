@@ -7,6 +7,8 @@ import time
 from itertools import repeat
 from multiprocessing import Process, Queue, Pool, Manager
 
+# Written by Jay
+
 platform_filename = ''
 os.chdir('..')
 if sys.platform == ("win32" or "cygwin"):
