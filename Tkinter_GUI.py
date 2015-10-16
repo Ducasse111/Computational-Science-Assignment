@@ -56,9 +56,6 @@ class Application(tk.Frame):
         self.panel.grid(column=0, columnspan=5, row=3, sticky="N"+"S"+"E"+"W")
 
         tk.Grid.columnconfigure(self, 0, weight=1)
-        # tk.Grid.columnconfigure(self, 1, weight=1)
-        # tk.Grid.columnconfigure(self, 2, weight=1)
-        # tk.Grid.columnconfigure(self, 3, weight=1)
         tk.Grid.columnconfigure(self, 4, weight=1)
         tk.Grid.rowconfigure(self, 3, weight=1)
 
@@ -103,9 +100,9 @@ class Application(tk.Frame):
                     self.panel.image = self.tkimage
                     self.panel.configure(image=self.tkimage)
                 except KeyError as e:
-                    self.edit_text(self.statustext, "Trial out of range.\n")
+                    self.edit_text(self.statustext, "Trial out of range.\n", e)
                 except IndexError as e:
-                    self.edit_text(self.statustext, "Trial out of range.\n")
+                    self.edit_text(self.statustext, "Trial out of range.\n", e)
             else:
                 self.edit_text(self.statustext, "No trial selected.\n")
         else:

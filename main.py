@@ -67,7 +67,7 @@ if __name__ == '__main__':
             start_time = time.time()
             manager = Manager()
             queue = manager.Queue()
-            processes = Pool(processes=number_of_trials)
+            processes = Pool(processes=int(number_of_trials/7))
             list_of_trials = [str(x) for x in range(1, number_of_trials)]
 
             print('starting file analysis')
