@@ -30,7 +30,6 @@ class GraphingApplication:
 
     def open_file(self, file):
         renamed_file = file.split('/')
-
         file_path = renamed_file[:-1]
         file_name = renamed_file[-1]
 
@@ -83,6 +82,7 @@ class GraphingApplication:
                 break
 
     def get_graph(self, trial):
+        print(trial)
         index = trial
         if index == "1":
             mpl.cla()
@@ -124,5 +124,7 @@ class GraphingApplication:
         fig = mpl.gcf()
 
         sio = io.BytesIO()
-        fig.savefig(sio, format='png')
-        return sio.getvalue()
+        fig.savefig(sio, format='raw')
+        val = sio.getvalue()
+        sio.close()
+        return val

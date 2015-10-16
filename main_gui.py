@@ -8,15 +8,14 @@ from tkinter import ttk
 
 from PIL import Image, ImageTk
 
-import graphing_api as graphing_api
+import graphing_api
 
 __Version__ = "0.1.1"
-#Edit this whenever you make a change, help us keep track.
+# Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
 #           we change b when we add a new feature
 #           we change c when whenever we do a small fix
-
 
 
 class Application(tk.Frame):
@@ -28,7 +27,7 @@ class Application(tk.Frame):
         self.raw_image = None
         self.cur_image = None
         self.image = None
-        self.master.title('Tkinter GUI Rewrite V'+ __Version__)
+        self.master.title('Tkinter GUI Rewrite V' + __Version__)
         self.grid()
         self.active_files = []
         self.opened_files = {}
@@ -81,7 +80,7 @@ class Application(tk.Frame):
                    "\n" \
                    "In Co-operation With:\n" \
                    "John Monash Science School" \
-                   "\n"\
+                   "\n" \
                    "\n" \
                    "Version: "
             messagebox.showinfo(message=text + __Version__, title='About', icon='info')
@@ -214,7 +213,7 @@ class Application(tk.Frame):
                 self.listbox_data[filename] = selected_file
 
     #  Finished : Working
-    def move_element_up(self, element):
+    def move_element_up(self):
         try:
             selected = self.list_of_open_files.curselection()[0]
             if selected != 0:
@@ -228,7 +227,7 @@ class Application(tk.Frame):
             pass
 
     #  Finished : Working
-    def move_element_down(self, element):
+    def move_element_down(self):
         try:
             selected = self.list_of_open_files.curselection()[0]
             if selected != self.list_of_open_files.size():
@@ -256,9 +255,12 @@ class Application(tk.Frame):
 
         for rubbish in trashcan:
             del self.opened_files[rubbish]
-        self.opened_files[self.selected_file] = graphing_api.GraphingApplication()
-        if self.selected_file is not None:
-            self.quick_load_file(self.opened_files[self.selected_file])
+
+        # self.opened_files[self.selected_file] = graphing_api.GraphingApplication()
+        # if self.selected_file is not None:
+        #     self.quick_load_file(self.opened_files[self.selected_file])
+
+        return self.selected_file
 
     # Finished : Working
     def quick_load_file(self, graphing_object):
@@ -300,6 +302,7 @@ class Application(tk.Frame):
 
     # Finished : Working
     def on_resize(self, event):
+        del event
         if not self.being_rescaled:
             self.being_rescaled = True
             self.after(100, self.refresh)
