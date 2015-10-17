@@ -3,9 +3,9 @@ import os
 import sys
 import io
 
-
 import scipy.io as scio
 import matplotlib.pyplot as mpl
+import matplotlib.mlab as mlab
 import numpy as np
 
 # Changes the directory that is being worked in. This allows loadmat to access files in the Data folder
@@ -67,7 +67,6 @@ def open_matlab_file(matlab_filename):
             break
     return stim_code, stim_time, firing, separate_dictionary, trialled_firing, number_trials
 
-
 def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection = 1):
     trial_selection = int(trial_selection)
     stimulied_firing = []
@@ -91,53 +90,49 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
                 temporary_list = [x]
                 counter += 1
     stimulied_firing.append(temporary_list)
-
+    
     if trial_selection == 1:
-        start_baseline = stimtime[0]
+        start_baseline = stimtime[0]-0.2
     else:
-        start_baseline = stimtime[stim_dictionary[trial_selection-1]+1]
+        start_baseline = stimtime[stim_dictionary[trial_selection-1]+1]-0.2
 
-    random_list = stimulied_firing[0].copy()
-
+    temp_slice = 0
+    for i,x in enumerate(stimulied_firing[0]):
+        if x >= start_baseline:
+            temp_slice = i
+            break
+    random_list = stimulied_firing[0][temp_slice:]
+    
     total = 0
     counter = 0
     ms_bin = []
-    while counter!=200:
-        while True:
-            items = random_list.pop(0)
-            if items>=start_baseline and items<(start_baseline+0.001):
-                total+=1
+    item = random_list.pop(0)
+    while counter != 200:
+        false_flag = True
+        while false_flag:
+            if item >= start_baseline and item < (start_baseline+0.001):
+                total += 1
+                try:
+                    item = random_list.pop(0)
+                except IndexError:
+                    false_flag = False
             else:
-                break
+                false_flag = False
         ms_bin.append(total)
         start_baseline+=0.001
         total = 0
-        counter+=1
+        counter += 1
 
+    return stimulied_firing, ms_bin
+    
+def probability_density_function_graph(firing_list, mean, sd):
+    time_interval = firing_list[-1] - firing_list[0]
+    a, b, c = mpl.hist(x=firing_list, bins=(int(time_interval/0.001)), normed=1)
+    pdf = mlab.normpdf(b, mean, sd)
+    mpl.plot(b, pdf, "b-")
+    mpl.show()
+    return
 
-
-# Function to find frequency of firing 200 milliseconds before stimuli applied
-# Iterate through firing list by popping items off
-def individual_baseline_mean_sd(firing_stamp, stimulus_type, stim_timestamp):
-
-    results = [[],[],[],[],[],[],[],[],[],[]]
-    total = 0
-
-    neuron_iterate = firing_stamp.pop(0)
-    for i,x in enumerate(stimulus_type):
-        if x != 0:
-            n = stim_timestamp[i]
-            while firing_stamp:
-                if neuron_iterate >= n:
-                    results[x-1].append(total/0.2)
-                    total = 0
-                    break
-                elif neuron_iterate >= (n-0.2):
-                    total += 1
-                neuron_iterate = firing_stamp.pop(0)
-    return results
-
-# Error catching
 def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_selection = "1"):
     user_selection = str(user_selection)
 
@@ -187,42 +182,15 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
         fig.savefig(sio, format='png')
         return sio.getvalue()
 
-
 StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660809_rec03_all")
 
 TrialSelect = 1
-TestResult = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
-print(len(SchWavSplitIntoTrials[TrialSelect-1]), SchWavSplitIntoTrials[TrialSelect-1])
-Totes = 0
-for x in TestResult:
-    Totes += len(x)
-print(Totes, len(TestResult), TestResult)
-if TrialSelect != 1:
-    print(StimTrigTime[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
-    print(StimTrig[DictionaryMarkingResetStimuli[TrialSelect-1]:DictionaryMarkingResetStimuli[TrialSelect]+1])
-else:
-    print(StimTrigTime[0:DictionaryMarkingResetStimuli[TrialSelect]+1])
-    print(StimTrig[0:DictionaryMarkingResetStimuli[TrialSelect]+1])
-
-
-# total = 0
-# restriction = 0
-# show_list = []
-# for x in fire:
-#     if x >= restriction and x < (restriction + 0.001):
-#         total += 1
-#     else:
-#         restriction += 0.001
-#         show_list.append(total)
-#         total = 1
-# show_list.append(total)
-# print(show_list)
-# total = 0
-# highest = 0
-# for x in show_list:
-#     if x > highest:
-#         highest = x
-#     total += x
-# print(total)
-# print(len(fire))
-# print(highest)
+TestResult, b = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
+print(len(TestResult[0]), TestResult[0][-16])
+print(len(b), b)
+counting = 0
+for x in b:
+    counting += x
+print(counting)
+# pdf = TestResult[1]
+# probability_density_function_graph(pdf, np.mean(pdf), np.std(pdf))
