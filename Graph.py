@@ -124,11 +124,48 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
         counter += 1
 
     return stimulied_firing, ms_bin
-    
-def probability_density_function_graph(firing_list, mean, sd):
-    time_interval = firing_list[-1] - firing_list[0]
-    a, b, c = mpl.hist(x=firing_list, bins=(int(time_interval/0.001)), normed=1)
-    pdf = mlab.normpdf(b, mean, sd)
+
+# Stimulus selection refers to which stimulus to analyze (0 is not counted as a stimulus)
+# 0 refers to the first stimulus and the timeframe between it and the next stimulus
+# Stimulus selection can't be 10, must be element of [0,9]
+# Slice stimtime/stimtrig must have element 0 as first acutal stimulus (not reset stimulus)
+def stimulus_bins(stimulied_firing, stimtrig_sliced, stimtime_sliced, stimulus_selection = 0):
+    initial_stimulus = stimtime_sliced[stimulus_selection]
+    next_stimulus = stimtime_sliced[stimulus_selection+1]
+    total = 0
+    ms_bin = []
+    random_list = stimulied_firing[stimulus_selection+1].copy()
+    item = random_list.pop(0)
+    while initial_stimulus <= next_stimulus:
+        false_flag = True
+        while false_flag:
+            if item >= initial_stimulus and item < (initial_stimulus+0.001):
+                total += 1
+                try:
+                    item = random_list.pop(0)
+                except IndexError:
+                    false_flag = False
+            else:
+                false_flag = False
+        ms_bin.append(total)
+        initial_stimulus+=0.001
+        total = 0
+    return stimtrig_sliced[stimulus_selection], ms_bin, stimtime_sliced[stimulus_selection]
+
+def all_stimulus_in_trial(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection = 1):
+    stimulied_firing, baseline_bins = trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection)
+    stimulus_ms_bins_dictionary = {}
+    stimulus_time_dictionary = {}
+    for x in range(0,10):
+        type, bin, type_time = stimulus_bins(stimulied_firing, stimtrig[stim_dictionary[trial_selection]-10:stim_dictionary[trial_selection]+1], stimtime[stim_dictionary[trial_selection]-10:stim_dictionary[trial_selection]+1], x)
+        stimulus_ms_bins_dictionary[type] = bin
+        stimulus_time_dictionary[type] = type_time
+    return stimulus_ms_bins_dictionary, stimulied_firing, stimulus_time_dictionary
+
+def probability_density_function_graph(b):
+    # time_interval = firing_list[-1] - firing_list[0]
+    # a, b, c = mpl.hist(x=firing_list, bins=(int(time_interval/0.001)), normed=1)
+    pdf = mlab.normpdf(b, np.mean(b), np.std(b))
     mpl.plot(b, pdf, "b-")
     mpl.show()
     return
@@ -184,13 +221,20 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
 
 StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660809_rec03_all")
 
-TrialSelect = 1
-TestResult, b = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
-print(len(TestResult[0]), TestResult[0][-16])
-print(len(b), b)
-counting = 0
-for x in b:
-    counting += x
-print(counting)
+# TrialSelect = 4
+# TestResult, b = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
+# print(len(TestResult[0]), TestResult[0][-16])
+# print(len(b), b)
+# counting = 0
+# for x in b:
+#     counting += x
+# print(counting)
+print(NotImportant)
+a,b,y=all_stimulus_in_trial(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, 1)
+for x in a.keys():
+    print(x, a[x])
+for x in y.keys():
+    print(x, y[x])
+
 # pdf = TestResult[1]
 # probability_density_function_graph(pdf, np.mean(pdf), np.std(pdf))

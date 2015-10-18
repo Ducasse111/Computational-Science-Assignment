@@ -8,8 +8,6 @@ import multiprocessing
 from itertools import repeat
 from multiprocessing import Process, Queue, Pool, Manager
 
-# multiprocessing is a pain
-
 platform_filename = ''
 os.chdir('..')
 if sys.platform == ("win32" or "cygwin"):
