@@ -124,7 +124,5 @@ class GraphingApplication:
         fig = mpl.gcf()
 
         sio = io.BytesIO()
-        fig.canvas.print_raw(sio)
-        val = sio.getvalue()
-        sio.close()
-        return val
+        fig.savefig(sio, format='png')
+        return sio.getvalue()

@@ -4,10 +4,11 @@ import main_gui
 import graphing_api
 import sys
 import time
+import multiprocessing
 from itertools import repeat
 from multiprocessing import Process, Queue, Pool, Manager
 
-# Written by Jay
+# multiprocessing is a pain
 
 platform_filename = ''
 os.chdir('..')
@@ -22,6 +23,7 @@ class AppProcess(Process):
     def __init__(self, queue):
         Process.__init__(self)
         self.queue = queue
+        self.new_windows = []
 
     def run(self):
         self.root = tk.Tk()
@@ -31,16 +33,18 @@ class AppProcess(Process):
         self.my_application.mainloop()
 
     def _check_queue(self):
-        if self.my_application.selected_file is not None:
-            self.queue.put(self.my_application.listbox_data[self.my_application.selected_file])
+        print(self.my_application.new_window)
+        if self.my_application.highlighted is not None and self.my_application.new_window not in self.new_windows:
+            selection = self.my_application.highlighted
+            self.queue.put(self.my_application.listbox_data[selection])
+            self.new_windows.append(selection)
         self.root.after(100, self._check_queue)
-
 
 def load_to_memory(file, trial):
     temp_graph = graphing_api.GraphingApplication()
     temp_graph.open_file(file)
     image = temp_graph.get_graph(trial)
-    return (image, trial)
+    return image, trial
 
 def delay(t0):
     return time.time() - t0
@@ -66,15 +70,17 @@ if __name__ == '__main__':
 
             number_of_trials = int(api.number_trials)
 
-            start_time = time.time()
             manager = Manager()
             queue = manager.Queue()
-            processes = Pool(processes=int(number_of_trials/7))
+            pool_count = multiprocessing.cpu_count() * 2
+            processes = Pool(processes=pool_count)
             list_of_trials = [str(x) for x in range(1, number_of_trials)]
 
             print('starting file analysis')
-            for x in processes.starmap_async(load_to_memory, zip(repeat(data), list_of_trials)).get():
-                received_data[x[1]] = x[0]
+            start_time = time.time()
+            for image, trial in processes.starmap_async(load_to_memory, zip(repeat(data), list_of_trials)).get():
+                received_data[trial] = image
+
             parsed = True
             print('Took ' + str(delay(start_time)) + 'to finish analysis of file')
 
