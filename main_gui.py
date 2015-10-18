@@ -136,7 +136,7 @@ class Application(tk.Frame):
         self.down_image = Image.open(self.icon+'down.png')
         self.down_image = self.down_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.window_open_image = Image.open(self.icon+'delete.png')
+        self.window_open_image = Image.open(self.icon+'window_add.png')
         self.window_open_image = self.window_open_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
@@ -404,7 +404,7 @@ class SeparateWindowFile(tk.Frame):
         elif sys.platform == "darwin":
             self.icon = 'icons/'
 
-        self.delete_image = Image.open(self.icon+'delete.png')
+        self.delete_image = Image.open(self.icon+'analyse.png')
         self.delete_image = self.delete_image.resize((14, 14), Image.ANTIALIAS)
         self.tk_delete_image = ImageTk.PhotoImage(self.delete_image)
         self.delete_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_delete_image,
