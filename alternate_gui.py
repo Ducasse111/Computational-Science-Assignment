@@ -2,6 +2,7 @@ import io
 import sys
 
 import tkinter as tk
+import scipy.io as sc_io
 from tkinter import messagebox
 from tkinter import filedialog
 from tkinter import ttk
@@ -10,7 +11,12 @@ from PIL import Image, ImageTk
 
 import graphing_api
 
-__Version__ = "0.3.1"
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
+
+__Version__ = "0.4.0"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
@@ -24,23 +30,25 @@ class Application(tk.Frame):
         self.master = master
         self.selected_file = None
         self.selected_trial = None
-        self.raw_image = None
-        self.cur_image = None
-        self.image = None
         self.highlighted = None
         self.new_window = None
+        self.file = None
         self.master.title('Tkinter GUI Rewrite V' + __Version__)
         self.grid()
         self.active_files = []
         self.opened_files = {}
         self.listbox_data = {}
 
-        self.loaded_trials = {}
+        # graphing api
+        self.number_trials = 0
 
-        self.refresh_rate = 100
-        self.being_rescaled = False
+        self.stimuli_time = []
+        self.stimuli_code = []
+        self.firing = []
+        self.trialled_firing = []
 
-        self.bind('<Configure>', self.on_resize)
+        self.dictionary = {}
+        self.mat = {}
 
         '''------------------
         Widget Instantiations
@@ -136,7 +144,7 @@ class Application(tk.Frame):
         self.down_image = Image.open(self.icon+'down.png')
         self.down_image = self.down_image.resize(self.i_size, Image.ANTIALIAS)
 
-        self.window_open_image = Image.open(self.icon+'delete.png')
+        self.window_open_image = Image.open(self.icon+'window_add.png')
         self.window_open_image = self.window_open_image.resize(self.i_size, Image.ANTIALIAS)
 
         self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
@@ -185,7 +193,9 @@ class Application(tk.Frame):
         # Base Image Viewer
         #####################################################
 
-        self.image_panel = tk.Canvas(self, height=480, width=720, bg='white')
+        self.figure = Figure(figsize=(9, 6), dpi=100)
+        self.a = self.figure.add_subplot(111)
+        self.image_panel = FigureCanvasTkAgg(self.figure, self)
 
         #####################################################
         # Widget Element Configuration
@@ -194,13 +204,13 @@ class Application(tk.Frame):
         # Grid instantiations
 
         self.scrollbar_toolbar.grid(row=0,             column=0, sticky='ew')
-        self.list_of_open_files.grid(row=1, rowspan=1, column=0, sticky='ns', padx=1, pady=1)
-        self.file_viewer.grid(row=1,        rowspan=1, column=1, sticky='ns', padx=1, pady=1)
-        self.trial_listbox.grid(row=1,      rowspan=1, column=2, sticky='ns', padx=1, pady=1)
-        self.trials.grid(row=1,             rowspan=1, column=3, sticky='ns', padx=1, pady=1)
+        self.list_of_open_files.grid(row=1, rowspan=2, column=0, sticky='ns', padx=1, pady=1)
+        self.file_viewer.grid(row=1,        rowspan=2, column=1, sticky='ns', padx=1, pady=1)
+        self.trial_listbox.grid(row=1,      rowspan=2, column=2, sticky='ns', padx=1, pady=1)
+        self.trials.grid(row=1,             rowspan=2, column=3, sticky='ns', padx=1, pady=1)
         self.file_text.grid(row=0,                     column=4, sticky='nsw', padx=2, pady=1)
         self.trial_text.grid(row=0,                    column=5, sticky='nsew', padx=2, pady=1)
-        self.image_panel.grid(row=1,     columnspan=2, column=4, sticky='nsew')
+        self.image_panel.get_tk_widget().grid(row=1,     columnspan=2, column=4, sticky='nsew')
 
         # Widget sticky and weighting
 
@@ -257,9 +267,6 @@ class Application(tk.Frame):
 
     # Finished : Working
     def listbox_element_selected(self, event):
-        self.image_panel.image = None
-        self.image_panel.create_image(0, 0, anchor='nw', image=None)
-
         self.selected_file = self.list_of_open_files.get(self.list_of_open_files.curselection())
         self.file_text.configure(text='Selected File: ' + str(self.selected_file))
 
@@ -285,38 +292,93 @@ class Application(tk.Frame):
     def base_gui_plot_trial(self, event):
         widget = event.widget
         self.selected_trial = widget.get(widget.curselection())
-        self.raw_image = Image.open(io.BytesIO(self.opened_files[
-                                               self.selected_file].get_graph(self.selected_trial)))
+        self.load_data()
 
-        self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(),
-                                                self.image_panel.winfo_height()), Image.ANTIALIAS)
+    def load_data(self):
+        if self.selected_trial is not None:
+            self.file = self.listbox_data[self.selected_file]
+            self.figure = Figure(figsize=(9, 6), dpi=100)
+            self.a = self.figure.add_subplot(111)
 
-        self.image = ImageTk.PhotoImage(self.cur_image)
+            try:
+                self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
+            except Exception as e:
+                try:
+                    self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
+                except FileNotFoundError:
+                    print("File not found: ", e)
 
-        self.image_panel.image = self.image
-        self.image_panel.create_image(0, 0, anchor='nw', image=self.image)
+            temp_var = sc_io.whosmat(self.file)[0][0]
 
-    # Finished : Working
-    def refresh(self):
-        if self.raw_image is not None:
-            width, height = self.cur_image.size
-            if width != self.image_panel.winfo_width() or height != self.image_panel.winfo_height():
+            for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][4]:
+                self.stimuli_time.append(x[0])
+            for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][5]:
+                if x[0] != 62:
+                    self.stimuli_code.append(x[0])
+                else:
+                    self.stimuli_code.append(0)
+                    self.number_trials += 1
+            for x in self.mat[str(self.file) + " " + str(self.selected_trial)][temp_var][0][0][4]:
+                self.firing.append(x[0])
+            counter = 1
+            for i, x in enumerate(self.stimuli_code):
+                if x == 0:
+                    self.dictionary[counter] = i
+                    counter += 1
 
-                self.cur_image = self.raw_image.resize((self.image_panel.winfo_width(),
-                                                        self.image_panel.winfo_height()), Image.ANTIALIAS)
+            temp_list = []
+            temp_key = 1
+            for x in self.firing:
+                try:
+                    if x <= self.stimuli_time[self.dictionary[temp_key]]:
+                        temp_list.append(x)
+                    else:
+                        self.trialled_firing.append(temp_list)
+                        temp_list = []
+                        temp_key += 1
+                except KeyError:
+                    break
+            index = self.selected_trial
+            if index == "1":
+                self.a.cla()
+                for x in self.trialled_firing[int(index)-1]:
+                    self.a.plot([x, x], [0, 10], "r-")
 
-                self.image = ImageTk.PhotoImage(self.cur_image)
+                self.a.plot(self.stimuli_time[0:self.dictionary[1]+1],
+                            self.stimuli_code[0:self.dictionary[1]+1], 'ko', ms=6)
 
-                self.image_panel.image = self.image
-                self.image_panel.create_image(0, 0, anchor='nw', image=self.image)
-        self.being_rescaled = False
+                for i, x in enumerate(self.stimuli_code[0:self.dictionary[1]+1]):
+                    self.a.annotate(s=str(x), xy=(self.stimuli_time[i], x), xytext=(self.stimuli_time[i], 10.2), color='0.2', size=13, weight="bold")
 
-    # Finished : Working
-    def on_resize(self, event):
-        del event
-        if not self.being_rescaled:
-            self.being_rescaled = True
-            self.after(100, self.refresh)
+                self.a.axis(xmin=0, xmax=self.stimuli_time[self.dictionary[1]])
+
+                self.a.set_title('Trial: ' + self.selected_trial)
+                self.a.set_xlabel("Time (s)")
+                self.a.set_ylabel("Amplitude of Stimuli")
+            else:
+                self.a.cla()
+
+                for x in self.trialled_firing[int(index)-1]:
+                    self.a.plot([x, x], [0, 10], "r-")
+
+                self.a.plot(self.stimuli_time[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
+                            self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
+                            'ko', ms=6)
+
+                for i, x in enumerate(self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1]):
+                    self.a.annotate(s=str(x), xy=(self.stimuli_time[i+self.dictionary[int(index)-1]], x),
+                                    xytext=(self.stimuli_time[i+self.dictionary[int(index)-1]], 10.2),
+                                    color='0.2', size=13, weight="bold")
+
+                self.a.axis(xmin=self.stimuli_time[self.dictionary[int(index)-1]],
+                            xmax=self.stimuli_time[self.dictionary[int(index)]])
+
+                self.a.set_title('Trial: ' + self.selected_trial)
+                self.a.set_xlabel("Time (s)")
+                self.a.set_ylabel("Amplitude of Stimuli")
+
+            self.image_panel = FigureCanvasTkAgg(self.figure, self)
+            self.image_panel.get_tk_widget().grid(row=1,     columnspan=2, column=4, sticky='nsew')
 
     # Finished : Working
     def unload_selected(self):
@@ -351,6 +413,7 @@ class Application(tk.Frame):
         textbox.configure(state='normal')
         textbox.insert("1.0", text)
         textbox.configure(state='disabled')
+
 
 class SeparateWindowFile(tk.Frame):
     def __init__(self, master=None, num_trials=0, file=None, data=None):
@@ -404,15 +467,15 @@ class SeparateWindowFile(tk.Frame):
         elif sys.platform == "darwin":
             self.icon = 'icons/'
 
-        self.delete_image = Image.open(self.icon+'delete.png')
-        self.delete_image = self.delete_image.resize((14, 14), Image.ANTIALIAS)
-        self.tk_delete_image = ImageTk.PhotoImage(self.delete_image)
-        self.delete_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_delete_image,
+        self.analyse = Image.open(self.icon+'analyse.png')
+        self.analyse = self.analyse.resize((14, 14), Image.ANTIALIAS)
+        self.tk_analyse = ImageTk.PhotoImage(self.analyse)
+        self.analyse_button = tk.Button(self.scrollbar_toolbar, image=self.tk_analyse,
                                             command=None, relief='flat', padx=2, pady=2,
                                             overrelief='groove', anchor='center')
 
         ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
-        self.delete_file_button.pack(side='left')
+        self.analyse_button.pack(side='left')
 
         # Image Window
         self.image_panel = tk.Canvas(self, height=600, width=1080, bg='white')
