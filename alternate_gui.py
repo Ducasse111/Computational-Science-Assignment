@@ -19,7 +19,7 @@ from matplotlib.figure import Figure
 
 import time
 
-__Version__ = "0.4.0"
+__Version__ = "0.4.3"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
@@ -200,6 +200,7 @@ class Application(tk.Frame):
         self.figure = Figure(figsize=(9, 6), dpi=100)
         # self.a = self.figure.add_subplot(111)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
+        self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
 
         #####################################################
         # Widget Element Configuration
@@ -207,15 +208,20 @@ class Application(tk.Frame):
 
         # Grid instantiations
 
+
         self.scrollbar_toolbar.grid(row=0,             column=0, sticky='ew')
+        self.file_text.grid(row=0,                     column=4, sticky='nsw', padx=1, pady=1)
+        self.trial_text.grid(row=0,                    column=5, sticky='nsew', padx=1, pady=1)
         self.list_of_open_files.grid(row=1, rowspan=2, column=0, sticky='ns', padx=1, pady=1)
         self.file_viewer.grid(row=1,        rowspan=2, column=1, sticky='ns', padx=1, pady=1)
         self.trial_listbox.grid(row=1,      rowspan=2, column=2, sticky='ns', padx=1, pady=1)
-        self.trials.grid(row=1,             rowspan=2, column=3, sticky='ns', padx=1, pady=1)
-        self.file_text.grid(row=0,                     column=4, sticky='nsw', padx=2, pady=1)
-        self.trial_text.grid(row=0,                    column=5, sticky='nsew', padx=2, pady=1)
-        self.display_trial_text.grid(row=0,                    column=6, sticky='nsew', padx=2, pady=1)
+        self.trials.grid(row=1,             rowspan=2, column=3, sticky='ns', padx=2, pady=1)
+        self.display_trial_text.grid(row=0, columnspan=2, column=6, sticky='nsew', padx=2, pady=1)
         self.image_panel.get_tk_widget().grid(row=1,     columnspan=3, column=4, sticky='nsew')
+        self.empty_frame = tk.Frame(self, width=3)
+        self.empty_frame.grid(row=1, rowspan=1, column=7, sticky='nsew')
+        self.empty_frame = tk.Frame(self, height=3)
+        self.empty_frame.grid(row=2, column=4, columnspan=7, sticky='nsew')
 
         # Widget sticky and weighting
 
@@ -312,6 +318,7 @@ class Application(tk.Frame):
 
         self.figure = Figure(figsize=(9, 6), dpi=100)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
+        self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
         self.a = self.figure.add_subplot(111)
 
         if self.selected_trial is not None:
@@ -424,7 +431,7 @@ class Application(tk.Frame):
             self.figure = Figure(figsize=(9, 6), dpi=100)
             self.image_panel = FigureCanvasTkAgg(self.figure, self)
             self.a = self.figure.add_subplot(111)
-            self.image_panel.get_tk_widget().grid(row=1,     columnspan=3, column=4, sticky='nsew')
+            self.image_panel.get_tk_widget().grid(row=1, columnspan=3, column=4, sticky='nsew')
 
     def set_active(self, event):
         if self.list_of_open_files.size() > 0:
@@ -433,11 +440,13 @@ class Application(tk.Frame):
     # Unfinished
     def new_file_window(self):
         if self.highlighted not in self.opened_files.keys() and self.highlighted is not None:
-            self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted, type='0')
+            self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted],
+                                                            self.highlighted, process_type='0')
             self.opened_files[self.highlighted].start()
         elif self.highlighted in self.opened_files.keys():
             if not self.opened_files[self.highlighted].is_alive():
-                self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted, type='0')
+                self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted],
+                                                                self.highlighted, process_type='0')
                 self.opened_files[self.highlighted].start()
 
 
@@ -465,6 +474,7 @@ class SeparateWindowFile(tk.Frame):
         self.figure = Figure(figsize=(9, 6), dpi=100)
         self.a = self.figure.add_subplot(111)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
+        self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
 
         # Toolbar
         self.menu = tk.Menu(self.master)
@@ -623,6 +633,7 @@ class SeparateWindowFile(tk.Frame):
                 self.a.set_ylabel("Amplitude of Stimuli")
 
         self.image_panel.get_tk_widget().grid(row=1, column=2, sticky='nsew', padx=0, pady=0)
+        self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
         # self.after(500, self.do_after)
 
     def do_after(self):
