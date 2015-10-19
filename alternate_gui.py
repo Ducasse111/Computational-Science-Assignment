@@ -191,13 +191,14 @@ class Application(tk.Frame):
 
         self.trial_text = tk.Label(self, text='Number of Trials: ', width=40, anchor='w', relief='groove')
         self.file_text = tk.Label(self, text='Selected File: ', width=40, anchor='w', relief='groove')
+        self.display_trial_text = tk.Label(self, text='Graphed Trial: ', width=40, anchor='w', relief='groove')
 
         #####################################################
         # Base Image Viewer
         #####################################################
 
         self.figure = Figure(figsize=(9, 6), dpi=100)
-        self.a = self.figure.add_subplot(111)
+        # self.a = self.figure.add_subplot(111)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
 
         #####################################################
@@ -213,12 +214,13 @@ class Application(tk.Frame):
         self.trials.grid(row=1,             rowspan=2, column=3, sticky='ns', padx=1, pady=1)
         self.file_text.grid(row=0,                     column=4, sticky='nsw', padx=2, pady=1)
         self.trial_text.grid(row=0,                    column=5, sticky='nsew', padx=2, pady=1)
-        self.image_panel.get_tk_widget().grid(row=1,     columnspan=2, column=4, sticky='nsew')
+        self.display_trial_text.grid(row=0,                    column=6, sticky='nsew', padx=2, pady=1)
+        self.image_panel.get_tk_widget().grid(row=1,     columnspan=3, column=4, sticky='nsew')
 
         # Widget sticky and weighting
 
         self.rowconfigure(1, weight=2)
-        self.columnconfigure(5, weight=1)
+        self.columnconfigure(6, weight=1)
 
         # Widget configurations)
 
@@ -273,6 +275,7 @@ class Application(tk.Frame):
     # Finished : Working
     def listbox_element_selected(self, event):
         self.selected_file = self.list_of_open_files.get(self.list_of_open_files.curselection())
+        self.file = self.listbox_data[self.selected_file]
         self.file_text.configure(text='Selected File: ' + str(self.selected_file))
 
         trashcan = []
@@ -298,13 +301,20 @@ class Application(tk.Frame):
     def base_gui_plot_trial(self, event):
         widget = event.widget
         self.selected_trial = widget.get(widget.curselection())
-        self.load_data()
+        self.display_trial_text.configure(text='Graphed Trial: ' + str(self.selected_trial))
 
-    def load_data(self):
+        self.image_panel.get_tk_widget().delete('all')
+        self.image_panel.get_tk_widget().grid_remove()
+
+        self.tk.call(self.image_panel.get_tk_widget(), 'delete', 1, 1)
+        del self.figure
+        del self.image_panel
+
+        self.figure = Figure(figsize=(9, 6), dpi=100)
+        self.image_panel = FigureCanvasTkAgg(self.figure, self)
+        self.a = self.figure.add_subplot(111)
+
         if self.selected_trial is not None:
-            self.file = self.listbox_data[self.selected_file]
-            self.figure = Figure(figsize=(9, 6), dpi=100)
-            self.a = self.figure.add_subplot(111)
 
             try:
                 self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
@@ -357,8 +367,6 @@ class Application(tk.Frame):
                     self.a.annotate(s=str(x), xy=(self.stimuli_time[i], x), xytext=(self.stimuli_time[i], 10.2), color='0.2', size=13, weight="bold")
 
                 self.a.axis(xmin=0, xmax=self.stimuli_time[self.dictionary[1]])
-
-                self.a.set_title('Trial: ' + self.selected_trial)
                 self.a.set_xlabel("Time (s)")
                 self.a.set_ylabel("Amplitude of Stimuli")
             else:
@@ -378,13 +386,10 @@ class Application(tk.Frame):
 
                 self.a.axis(xmin=self.stimuli_time[self.dictionary[int(index)-1]],
                             xmax=self.stimuli_time[self.dictionary[int(index)]])
-
-                self.a.set_title('Trial: ' + self.selected_trial)
                 self.a.set_xlabel("Time (s)")
                 self.a.set_ylabel("Amplitude of Stimuli")
 
-            self.image_panel = FigureCanvasTkAgg(self.figure, self)
-            self.image_panel.get_tk_widget().grid(row=1,     columnspan=2, column=4, sticky='nsew')
+            self.image_panel.get_tk_widget().grid(row=1,     columnspan=3, column=4, sticky='nsew')
 
     # Finished : Working
     def unload_selected(self):
@@ -405,8 +410,21 @@ class Application(tk.Frame):
             if self.list_of_open_files.size() > 0:
                 self.list_of_open_files.selection_set(items[0])
             self.trial_listbox.delete(0, self.trial_listbox.size())
-            self.trial_text.configure(text='Number of trials:')
+            self.trial_text.configure(text='Number of Trials:')
             self.file_text.configure(text='Selected File:')
+            self.display_trial_text.configure(text='Graphed Trial: ')
+
+            self.image_panel.get_tk_widget().delete('all')
+            self.image_panel.get_tk_widget().grid_remove()
+
+            self.tk.call(self.image_panel.get_tk_widget(), 'delete', 1, 1)
+            del self.figure
+            del self.image_panel
+
+            self.figure = Figure(figsize=(9, 6), dpi=100)
+            self.image_panel = FigureCanvasTkAgg(self.figure, self)
+            self.a = self.figure.add_subplot(111)
+            self.image_panel.get_tk_widget().grid(row=1,     columnspan=3, column=4, sticky='nsew')
 
     def set_active(self, event):
         if self.list_of_open_files.size() > 0:
@@ -415,11 +433,11 @@ class Application(tk.Frame):
     # Unfinished
     def new_file_window(self):
         if self.highlighted not in self.opened_files.keys() and self.highlighted is not None:
-            self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted)
+            self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted, type='0')
             self.opened_files[self.highlighted].start()
         elif self.highlighted in self.opened_files.keys():
             if not self.opened_files[self.highlighted].is_alive():
-                self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted)
+                self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted, type='0')
                 self.opened_files[self.highlighted].start()
 
 
@@ -496,8 +514,8 @@ class SeparateWindowFile(tk.Frame):
         self.analyse = self.analyse.resize((14, 14), Image.ANTIALIAS)
         self.tk_analyse = ImageTk.PhotoImage(self.analyse)
         self.analyse_button = tk.Button(self.scrollbar_toolbar, image=self.tk_analyse,
-                                            command=None, relief='flat', padx=2, pady=2,
-                                            overrelief='groove', anchor='center')
+                                        command=None, relief='flat', padx=2, pady=2,
+                                        overrelief='groove', anchor='center')
 
         ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
         self.analyse_button.pack(side='left')
@@ -518,49 +536,57 @@ class SeparateWindowFile(tk.Frame):
         self.selected_trial = widget.get(widget.curselection())
         self.trial_text.configure(text='Trial: ' + str(self.selected_trial))
 
+        self.image_panel.get_tk_widget().delete('all')
+        self.image_panel.get_tk_widget().grid_remove()
+
+        self.tk.call(self.image_panel.get_tk_widget(), 'delete', 1, 1)
+        del self.figure
+        del self.image_panel
+
         self.figure = Figure(figsize=(9, 6), dpi=100)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
         self.a = self.figure.add_subplot(111)
 
         if self.selected_trial is not None:
-            try:
-                self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
-            except Exception as e:
+            if str(str(self.file) + " " + str(self.selected_trial)) not in self.mat.keys():
                 try:
                     self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
-                except FileNotFoundError:
-                    print("File not found: ", e)
+                except Exception as e:
+                    try:
+                        self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
+                    except FileNotFoundError:
+                        print("File not found: ", e)
 
-            temp_var = sc_io.whosmat(self.file)[0][0]
+                temp_var = sc_io.whosmat(self.file)[0][0]
 
-            for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][4]:
-                self.stimuli_time.append(x[0])
-            for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][5]:
-                if x[0] != 62:
-                    self.stimuli_code.append(x[0])
-                else:
-                    self.stimuli_code.append(0)
-                    self.number_trials += 1
-            for x in self.mat[str(self.file) + " " + str(self.selected_trial)][temp_var][0][0][4]:
-                self.firing.append(x[0])
-            counter = 1
-            for i, x in enumerate(self.stimuli_code):
-                if x == 0:
-                    self.dictionary[counter] = i
-                    counter += 1
-
-            temp_list = []
-            temp_key = 1
-            for x in self.firing:
-                try:
-                    if x <= self.stimuli_time[self.dictionary[temp_key]]:
-                        temp_list.append(x)
+                for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][4]:
+                    self.stimuli_time.append(x[0])
+                for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][5]:
+                    if x[0] != 62:
+                        self.stimuli_code.append(x[0])
                     else:
-                        self.trialled_firing.append(temp_list)
-                        temp_list = []
-                        temp_key += 1
-                except KeyError:
-                    break
+                        self.stimuli_code.append(0)
+                        self.number_trials += 1
+                for x in self.mat[str(self.file) + " " + str(self.selected_trial)][temp_var][0][0][4]:
+                    self.firing.append(x[0])
+                counter = 1
+                for i, x in enumerate(self.stimuli_code):
+                    if x == 0:
+                        self.dictionary[counter] = i
+                        counter += 1
+
+                temp_list = []
+                temp_key = 1
+                for x in self.firing:
+                    try:
+                        if x <= self.stimuli_time[self.dictionary[temp_key]]:
+                            temp_list.append(x)
+                        else:
+                            self.trialled_firing.append(temp_list)
+                            temp_list = []
+                            temp_key += 1
+                    except KeyError:
+                        break
             index = self.selected_trial
             if index == "1":
                 self.a.cla()
@@ -574,8 +600,6 @@ class SeparateWindowFile(tk.Frame):
                     self.a.annotate(s=str(x), xy=(self.stimuli_time[i], x), xytext=(self.stimuli_time[i], 10.2), color='0.2', size=13, weight="bold")
 
                 self.a.axis(xmin=0, xmax=self.stimuli_time[self.dictionary[1]])
-
-                self.a.set_title('Trial: ' + self.selected_trial)
                 self.a.set_xlabel("Time (s)")
                 self.a.set_ylabel("Amplitude of Stimuli")
             else:
@@ -595,8 +619,6 @@ class SeparateWindowFile(tk.Frame):
 
                 self.a.axis(xmin=self.stimuli_time[self.dictionary[int(index)-1]],
                             xmax=self.stimuli_time[self.dictionary[int(index)]])
-
-                self.a.set_title('Trial: ' + self.selected_trial)
                 self.a.set_xlabel("Time (s)")
                 self.a.set_ylabel("Amplitude of Stimuli")
 
@@ -608,7 +630,7 @@ class SeparateWindowFile(tk.Frame):
 
 
 class NewWindow(Process):
-    def __init__(self, file, file_name):
+    def __init__(self, file, file_name, process_type):
         Process.__init__(self)
         self.mat_lab = graphing_api.GraphingApplication()
         self.mat_lab.open_file(file)
@@ -616,9 +638,16 @@ class NewWindow(Process):
 
         self.file = file
         self.file_name = file_name
+        self.type = process_type
 
     def run(self):
-        self.root = tk.Tk()
-        self.my_application = SeparateWindowFile(self.root, self.number_of_trials, self.file, self.file_name)
-        self.my_application.pack(fill='both', expand=True)
-        self.my_application.mainloop()
+        if self.type == '0':
+            self.root = tk.Tk()
+            self.my_application = SeparateWindowFile(self.root, self.number_of_trials, self.file, self.file_name)
+            self.my_application.pack(fill='both', expand=True)
+            self.my_application.mainloop()
+        elif self.type == '1':
+            self.root = tk.Tk()
+            self.my_application = SeparateWindowFile(self.root, self.number_of_trials, self.file, self.file_name)
+            self.my_application.pack(fill='both', expand=True)
+            self.my_application.mainloop()
