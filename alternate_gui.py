@@ -1,4 +1,4 @@
-
+import io
 import sys
 
 import tkinter as tk
@@ -14,8 +14,10 @@ from multiprocessing import Process
 
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+
+import time
 
 __Version__ = "0.4.0"
 # Edit this whenever you make a change, help us keep track.
@@ -280,17 +282,6 @@ class Application(tk.Frame):
         for rubbish in trashcan:
             del self.opened_files[rubbish]
         if self.selected_file is not None:
-            self.quick_load_file(self.opened_files[self.selected_file])
-
-    # Finished : Working
-    def quick_load_file(self, graphing_object):
-        graphing_object.open_file(self.listbox_data[self.selected_file])
-        self.trial_text.configure(text='Number of Trials: ' + str(graphing_object.number_trials))
-        self.trial_listbox.delete(0, self.trial_listbox.size())
-        for x in range(graphing_object.number_trials):
-            self.trial_listbox.insert('end', str(x+1))
-=======
-        if self.selected_file is not None:
             self.quick_load_file(self.selected_file)
 
     # Finished : Working
@@ -302,7 +293,6 @@ class Application(tk.Frame):
         for x in range(temp.number_trials):
             self.trial_listbox.insert('end', str(x+1))
         del temp
->>>>>>> Some fixes to the new graphing api. fixed a lot of mini bugs and would-be errors.
 
     # Finished : Working
     def base_gui_plot_trial(self, event):
@@ -432,22 +422,8 @@ class Application(tk.Frame):
                 self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted], self.highlighted)
                 self.opened_files[self.highlighted].start()
 
-    @staticmethod
-    def edit_text(textbox, text):
-        textbox.configure(state='normal')
-        textbox.insert("1.0", text)
-        textbox.configure(state='disabled')
-
 
 class SeparateWindowFile(tk.Frame):
-<<<<<<< HEAD
-    def __init__(self, master=None, num_trials=0, file=None, data=None):
-        tk.Frame.__init__(self, master)
-        self.master = master
-        self.data = data
-        self.file = file
-        self.master.title('Trial Viewer ({})'.format(self.file))
-=======
     def __init__(self, master=None, num_trials=0, file=None, file_name=None):
         tk.Frame.__init__(self, master)
         self.master = master
@@ -540,6 +516,7 @@ class SeparateWindowFile(tk.Frame):
     def trial_selected(self, event):
         widget = event.widget
         self.selected_trial = widget.get(widget.curselection())
+        self.trial_text.configure(text='Trial: ' + str(self.selected_trial))
 
         self.figure = Figure(figsize=(9, 6), dpi=100)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
