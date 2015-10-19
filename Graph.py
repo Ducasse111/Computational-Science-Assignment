@@ -4,6 +4,7 @@ import sys
 import io
 
 import scipy.io as scio
+import scipy.stats as scis
 import matplotlib.pyplot as mpl
 import matplotlib.mlab as mlab
 import numpy as np
@@ -65,6 +66,11 @@ def open_matlab_file(matlab_filename):
                 Temporary_Key += 1
         except KeyError:
             break
+    del Temporary_List
+    del Temporary_Key
+    del counter
+    del b
+    del mat
     return stim_code, stim_time, firing, separate_dictionary, trialled_firing, number_trials
 
 def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection = 1):
@@ -102,7 +108,7 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
             temp_slice = i
             break
     random_list = stimulied_firing[0][temp_slice:]
-    
+    baseline_firings = random_list.copy()
     total = 0
     counter = 0
     ms_bin = []
@@ -122,8 +128,8 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
         start_baseline+=0.001
         total = 0
         counter += 1
-
-    return stimulied_firing, ms_bin
+    del random_list
+    return stimulied_firing, ms_bin, baseline_firings
 
 # Stimulus selection refers to which stimulus to analyze (0 is not counted as a stimulus)
 # 0 refers to the first stimulus and the timeframe between it and the next stimulus
@@ -150,23 +156,37 @@ def stimulus_bins(stimulied_firing, stimtrig_sliced, stimtime_sliced, stimulus_s
         ms_bin.append(total)
         initial_stimulus+=0.001
         total = 0
-    return stimtrig_sliced[stimulus_selection], ms_bin, stimtime_sliced[stimulus_selection]
+    del random_list
+    return stimtrig_sliced[stimulus_selection], ms_bin, stimtime_sliced[stimulus_selection], stimulied_firing[stimulus_selection+1]
 
+# Splits firings into ms bins for a selected trial
+# Exports as a dictionary
+# The key refers to the stimulus, the element is the list of ms bins
+# Stimulus_time_dictionary is when a stimulus occurred
 def all_stimulus_in_trial(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection = 1):
-    stimulied_firing, baseline_bins = trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection)
+    stimulied_firing, baseline_bins, baseline_firings = trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_selection)
     stimulus_ms_bins_dictionary = {}
     stimulus_time_dictionary = {}
+    firings_during_stimulus = {}
     for x in range(0,10):
-        type, bin, type_time = stimulus_bins(stimulied_firing, stimtrig[stim_dictionary[trial_selection]-10:stim_dictionary[trial_selection]+1], stimtime[stim_dictionary[trial_selection]-10:stim_dictionary[trial_selection]+1], x)
+        type, bin, type_time, stimulus_firings_list = stimulus_bins(stimulied_firing, stimtrig[stim_dictionary[trial_selection]-10:stim_dictionary[trial_selection]+1], stimtime[stim_dictionary[trial_selection]-10:stim_dictionary[trial_selection]+1], x)
         stimulus_ms_bins_dictionary[type] = bin
         stimulus_time_dictionary[type] = type_time
-    return stimulus_ms_bins_dictionary, stimulied_firing, stimulus_time_dictionary
+        firings_during_stimulus[type] = stimulus_firings_list
+    return stimulus_ms_bins_dictionary, stimulied_firing, stimulus_time_dictionary, baseline_firings, firings_during_stimulus
+# stimulus_ms_bins_dictionary: input a stimulus number/amplitude, and it will return the ms bins counting
+# the firings per millisecond between that stimulus and the following stimulus
+# firings_during_stimulus: input a stimulus number/amplitude, and it will return the list of firings
+# that occurred between that stimulus and the following stimulus
 
-def probability_density_function_graph(b):
-    # time_interval = firing_list[-1] - firing_list[0]
-    # a, b, c = mpl.hist(x=firing_list, bins=(int(time_interval/0.001)), normed=1)
-    pdf = mlab.normpdf(b, np.mean(b), np.std(b))
-    mpl.plot(b, pdf, "b-")
+def probability_density_function_graph(b1):
+    pdf1 = scis.norm.pdf(b1, np.mean(b1), np.std(b1))
+    #mpl.hist(b1, normed=1)
+    print("Mean",np.mean(b1))
+    print("SD",np.std(b1))
+    print(b1[0],b1[-1])
+    mpl.plot(b1, pdf1, "b-")
+    mpl.xlim(xmin=b1[0],xmax=b1[-1])
     mpl.show()
     return
 
@@ -219,7 +239,7 @@ def trial_graphs(sch_wav_trials, stimuli, stimuli_time, dictionary_trial, user_s
         fig.savefig(sio, format='png')
         return sio.getvalue()
 
-StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660809_rec03_all")
+StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials,NotImportant = open_matlab_file("660810_rec03_all")
 
 # TrialSelect = 4
 # TestResult, b = trial_mean_sd(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, TrialSelect)
@@ -230,11 +250,13 @@ StimTrig,StimTrigTime,SchWav,DictionaryMarkingResetStimuli,SchWavSplitIntoTrials
 #     counting += x
 # print(counting)
 print(NotImportant)
-a,b,y=all_stimulus_in_trial(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, 1)
-for x in a.keys():
-    print(x, a[x])
-for x in y.keys():
-    print(x, y[x])
+a,b,y,z,q=all_stimulus_in_trial(SchWavSplitIntoTrials, StimTrig, StimTrigTime, DictionaryMarkingResetStimuli, 1)
+# for x in a.keys():
+#     print(x, a[x])
+# for x in y.keys():
+#     print(x, y[x])
+# for x in q.keys():
+#     print(x, q[x])
 
-# pdf = TestResult[1]
-# probability_density_function_graph(pdf, np.mean(pdf), np.std(pdf))
+test_pdf = q[10]
+probability_density_function_graph(test_pdf)
