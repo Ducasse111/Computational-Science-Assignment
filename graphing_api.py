@@ -4,7 +4,6 @@ import io
 
 import scipy.io as sc_io
 import matplotlib.pyplot as mpl
-import numpy as np
 
 platform_filename = ''
 if sys.platform == ("win32" or "cygwin"):
@@ -34,11 +33,8 @@ class GraphingApplication:
         file_path = renamed_file[:-1]
         file_name = renamed_file[-1]
 
-        path = ''
+        path = ''.join(x + platform_filename for x in file_path)
         original_path = os.getcwd()
-
-        for x, keyword in enumerate(file_path):
-            path += keyword + platform_filename
 
         os.chdir(path)
 

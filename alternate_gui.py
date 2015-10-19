@@ -1,5 +1,5 @@
-import io
 import sys
+import os
 
 import tkinter as tk
 import scipy.io as sc_io
@@ -19,25 +19,32 @@ from matplotlib.figure import Figure
 
 import time
 
-__Version__ = "0.4.3"
+__Version__ = "0.4.4"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
 #           we change b when we add a new feature
 #           we change c when whenever we do a small fix
 
+platform_filename = ''
+if sys.platform == ("win32" or "cygwin"):
+    platform_filename = '\\'
+
+elif sys.platform == "darwin":
+    platform_filename = '/'
 
 class Application(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
         self.master = master
+        self.master.title('Tkinter GUI Rewrite V' + __Version__)
+        self.grid()
+
         self.selected_file = None
         self.selected_trial = None
         self.highlighted = None
         self.new_window = None
         self.file = None
-        self.master.title('Tkinter GUI Rewrite V' + __Version__)
-        self.grid()
         self.active_files = []
         self.opened_files = {}
         self.listbox_data = {}
@@ -322,7 +329,6 @@ class Application(tk.Frame):
         self.a = self.figure.add_subplot(111)
 
         if self.selected_trial is not None:
-
             try:
                 self.mat[str(self.file) + " " + str(self.selected_trial)] = sc_io.loadmat(self.file, appendmat=True)
             except Exception as e:
@@ -335,6 +341,7 @@ class Application(tk.Frame):
 
             for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][4]:
                 self.stimuli_time.append(x[0])
+
             for x in self.mat[str(self.file) + " " + str(self.selected_trial)]['StimTrig'][0][0][5]:
                 if x[0] != 62:
                     self.stimuli_code.append(x[0])
@@ -440,13 +447,13 @@ class Application(tk.Frame):
     # Unfinished
     def new_file_window(self):
         if self.highlighted not in self.opened_files.keys() and self.highlighted is not None:
-            self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted],
-                                                            self.highlighted, process_type='0')
+            self.opened_files[self.highlighted] = NewWindow(file=self.listbox_data[self.highlighted],
+                                                            file_name=self.highlighted, process_type='0')
             self.opened_files[self.highlighted].start()
         elif self.highlighted in self.opened_files.keys():
             if not self.opened_files[self.highlighted].is_alive():
-                self.opened_files[self.highlighted] = NewWindow(self.listbox_data[self.highlighted],
-                                                                self.highlighted, process_type='0')
+                self.opened_files[self.highlighted] = NewWindow(file=self.listbox_data[self.highlighted],
+                                                                file_name=self.highlighted, process_type='0')
                 self.opened_files[self.highlighted].start()
 
 
@@ -461,6 +468,7 @@ class SeparateWindowFile(tk.Frame):
         # graphing api
         self.number_trials = 0
         self.selected_trial = None
+        self.highlighted = None
 
         self.stimuli_time = []
         self.stimuli_code = []
@@ -469,6 +477,7 @@ class SeparateWindowFile(tk.Frame):
 
         self.dictionary = {}
         self.mat = {}
+        self.active_analysis = {}
 
         # Base Image Viewer
         self.figure = Figure(figsize=(9, 6), dpi=100)
@@ -524,7 +533,7 @@ class SeparateWindowFile(tk.Frame):
         self.analyse = self.analyse.resize((14, 14), Image.ANTIALIAS)
         self.tk_analyse = ImageTk.PhotoImage(self.analyse)
         self.analyse_button = tk.Button(self.scrollbar_toolbar, image=self.tk_analyse,
-                                        command=None, relief='flat', padx=2, pady=2,
+                                        command=self.analysis, relief='flat', padx=2, pady=2,
                                         overrelief='groove', anchor='center')
 
         ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
@@ -636,16 +645,39 @@ class SeparateWindowFile(tk.Frame):
         self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
         # self.after(500, self.do_after)
 
+    def analysis(self, event):
+        if self.highlighted is not None and self.highlighted not in self.active_analysis.keys():
+            self.active_analysis[str(self.highlighted)] = NewWindow(process_type='1', trial=self.highlighted)
+
+    def set_active(self, event):
+        if self.trial_listbox.size() > 0:
+            self.highlighted = self.trial_listbox.get(self.trial_listbox.curselection())
+
     def do_after(self):
         self.image_panel.get_tk_widget().delete('all')
 
 
+class AnalysisWindow(tk.Frame):
+    def __init__(self, file, trial, master=None):
+        tk.Frame.__init__(self, master)
+        self.master = master
+
+
+        self.file = file
+        self.file_name = self.file.split()[:-1]
+        self.master.title('Analyser ({})'.format(self.file_name))
+        self.trial = trial
+        self.graphing_object = graphing_api.GraphingApplication()
+        self.graphing_object.open_file(self.file)
+
+
 class NewWindow(Process):
-    def __init__(self, file, file_name, process_type):
+    def __init__(self, process_type, file=None, file_name=None, trial=None):
         Process.__init__(self)
         self.mat_lab = graphing_api.GraphingApplication()
         self.mat_lab.open_file(file)
         self.number_of_trials = self.mat_lab.number_trials
+        self.trial = trial
 
         self.file = file
         self.file_name = file_name
@@ -659,6 +691,6 @@ class NewWindow(Process):
             self.my_application.mainloop()
         elif self.type == '1':
             self.root = tk.Tk()
-            self.my_application = SeparateWindowFile(self.root, self.number_of_trials, self.file, self.file_name)
+            self.my_application = AnalysisWindow(self.file, self.trial)
             self.my_application.pack(fill='both', expand=True)
             self.my_application.mainloop()
