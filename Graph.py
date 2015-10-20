@@ -128,7 +128,6 @@ def trial_mean_sd(trialled_sch_wav, stimtrig, stimtime, stim_dictionary, trial_s
         start_baseline+=0.001
         total = 0
         counter += 1
-    del random_list
     return stimulied_firing, ms_bin, baseline_firings
 
 # Stimulus selection refers to which stimulus to analyze (0 is not counted as a stimulus)
@@ -181,11 +180,14 @@ def all_stimulus_in_trial(trialled_sch_wav, stimtrig, stimtime, stim_dictionary,
 
 def probability_density_function_graph(b1):
     pdf1 = scis.norm.pdf(b1, np.mean(b1), np.std(b1))
-    #mpl.hist(b1, normed=1)
+    a1, a2, a3 = mpl.hist(b1, 50, normed=1)
+    mpl.cla()
+    pdf2 = mlab.normpdf(a2, np.mean(b1), np.std(b1))
     print("Mean",np.mean(b1))
     print("SD",np.std(b1))
     print(b1[0],b1[-1])
     mpl.plot(b1, pdf1, "b-")
+    mpl.plot(a2, pdf2, "k-")
     mpl.xlim(xmin=b1[0],xmax=b1[-1])
     mpl.show()
     return
@@ -258,5 +260,5 @@ a,b,y,z,q=all_stimulus_in_trial(SchWavSplitIntoTrials, StimTrig, StimTrigTime, D
 # for x in q.keys():
 #     print(x, q[x])
 
-test_pdf = q[10]
+test_pdf = b[10]
 probability_density_function_graph(test_pdf)
