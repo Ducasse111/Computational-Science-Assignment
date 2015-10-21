@@ -85,14 +85,14 @@ class GraphingApplication:
             for x in self.trialled_firing[int(index)-1]:
                 mpl.plot([x, x], [0, 10], "r-")
 
-            mpl.plot(self.stimuli_time[0:self.dictionary[1]+1],
-                     self.stimuli_code[0:self.dictionary[1]+1], 'ko', ms=6)
+            mpl.plot(self.stimuli_time[0:self.dictionary_marking_0s_index_in_stimuli_lists[1]+1],
+                     self.stimuli_code[0:self.dictionary_marking_0s_index_in_stimuli_lists[1]+1], 'ko', ms=6)
 
-            for i, x in enumerate(self.stimuli_code[0:self.dictionary[1]+1]):
+            for i, x in enumerate(self.stimuli_code[0:self.dictionary_marking_0s_index_in_stimuli_lists[1]+1]):
                 mpl.annotate(s=str(x), xy=(self.stimuli_time[i], x),
                              xytext=(self.stimuli_time[i], 10.2), color='0.2', size=13, weight="bold")
 
-            mpl.xlim(xmin=0, xmax=self.stimuli_time[self.dictionary[1]])
+            mpl.xlim(xmin=0, xmax=self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[1]])
 
             mpl.xlabel("Time (s)")
             mpl.ylabel("Amplitude of Stimuli")
@@ -102,20 +102,84 @@ class GraphingApplication:
             for x in self.trialled_firing[int(index)-1]:
                 mpl.plot([x, x], [0, 10], "r-")
 
-            mpl.plot(self.stimuli_time[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
-                     self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1],
+            mpl.plot(self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[int(index)-1]:self.dictionary_marking_0s_index_in_stimuli_lists[int(index)]+1],
+                     self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[int(index)-1]:self.dictionary_marking_0s_index_in_stimuli_lists[int(index)]+1],
                      'ko', ms=6)
 
-            for i, x in enumerate(self.stimuli_code[self.dictionary[int(index)-1]:self.dictionary[int(index)]+1]):
-                mpl.annotate(s=str(x), xy=(self.stimuli_time[i+self.dictionary[int(index)-1]], x),
-                             xytext=(self.stimuli_time[i+self.dictionary[int(index)-1]], 10.2),
+            for i, x in enumerate(self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[int(index)-1]:self.dictionary_marking_0s_index_in_stimuli_lists[int(index)]+1]):
+                mpl.annotate(s=str(x), xy=(self.stimuli_time[i+self.dictionary_marking_0s_index_in_stimuli_lists[int(index)-1]], x),
+                             xytext=(self.stimuli_time[i+self.dictionary_marking_0s_index_in_stimuli_lists[int(index)-1]], 10.2),
                              color='0.2', size=13, weight="bold")
 
-            mpl.xlim(xmin=self.stimuli_time[self.dictionary[int(index)-1]],
-                     xmax=self.stimuli_time[self.dictionary[int(index)]])
+            mpl.xlim(xmin=self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[int(index)-1]],
+                     xmax=self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[int(index)]])
 
             mpl.xlabel("Time (s)")
             mpl.ylabel("Amplitude of Stimuli")
+
+        fig = mpl.gcf()
+
+        sio = io.BytesIO()
+        fig.savefig(sio, format='png')
+        return sio.getvalue()
+
+    def get_frequency_histogram_graph(self, trial):
+        trial = int(trial)
+
+        stimulus_ms_bins_dictionary,\
+        stimulied_firing,\
+        stimulus_time_dictionary,\
+        baseline_firings,\
+        firings_during_stimulus,\
+        ms_time_dictionary = self.all_stimulus_in_specific_trial(trial)
+
+        if trial == 1:
+            x_bar = ms_time_dictionary[0]
+            y_bar = stimulus_ms_bins_dictionary[0]
+            for x in self.stimuli_code[0:self.dictionary_marking_0s_index_in_stimuli_lists[1]]:
+                x_bar.extend(ms_time_dictionary[x])
+                y_bar.extend(stimulus_ms_bins_dictionary[x])
+
+            mpl.cla()
+            for x in self.stimuli_time[0:self.dictionary_marking_0s_index_in_stimuli_lists[1]+1]:
+                mpl.plot([x, x], [0, 4], "r-")
+
+            mpl.bar(left=x_bar,height=y_bar,width=0.001)
+
+            for i, x in enumerate(self.stimuli_code[0:self.dictionary_marking_0s_index_in_stimuli_lists[1]+1]):
+                mpl.annotate(s=str(x), xy=(self.stimuli_time[i], x),
+                             xytext=(self.stimuli_time[i], 10.2), color='0.2', size=13, weight="bold")
+
+            mpl.xlim(xmin=0, xmax=self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[1]])
+            mpl.ylim(ymin=0, ymax=4)
+
+            mpl.xlabel("Time (s)")
+            mpl.ylabel("Frequncy of Neuron firings (Hz)")
+        else:
+            mpl.cla()
+
+            x_bar = []
+            y_bar = []
+            for x in self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)-1]:self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)]]:
+                x_bar.extend(ms_time_dictionary[x])
+                y_bar.extend(stimulus_ms_bins_dictionary[x])
+
+            for x in self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)-1]:self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)]+1]:
+                mpl.plot([x, x], [0, 4], "r-")
+
+            mpl.bar(left=x_bar,height=y_bar,width=0.001)
+
+            for i, x in enumerate(self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)-1]:self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)]+1]):
+                mpl.annotate(s=str(x), xy=(self.stimuli_time[i+self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)-1]], x),
+                             xytext=(self.stimuli_time[i+self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)-1]], 10.2),
+                             color='0.2', size=13, weight="bold")
+
+            mpl.xlim(xmin=self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)-1]],
+                     xmax=self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[int(trial)]])
+            mpl.ylim(ymin=0, ymax=4)
+
+            mpl.xlabel("Time (s)")
+            mpl.ylabel("Frequncy of Neuron firings (Hz)")
 
         fig = mpl.gcf()
 
@@ -180,11 +244,41 @@ class GraphingApplication:
             counter += 1
         return stimulied_firing, baseline_ms_bins, baseline_firings
 
+    def creating_stimulus_bins_before_first_stimulus(self, stimulied_firing, stimtime_sliced, first_trial=False):
+        if first_trial:
+            initial_stimulus = 0
+        else:
+            initial_stimulus = stimtime_sliced[0]
+        next_stimulus = stimtime_sliced[1]
+        total = 0
+        ms_bin = []
+        ms_time = [initial_stimulus]
+        random_list = stimulied_firing[0].copy()
+        item = random_list.pop(0)
+        while initial_stimulus <= next_stimulus:
+            false_flag = True
+            while false_flag:
+                if item >= initial_stimulus and item < (initial_stimulus+0.001):
+                    total += 1
+                    try:
+                        item = random_list.pop(0)
+                    except IndexError:
+                        false_flag = False
+                else:
+                    false_flag = False
+            ms_bin.append(total)
+            initial_stimulus+=0.001
+            ms_time.append(initial_stimulus)
+            total = 0
+        del random_list
+        return ms_bin, stimtime_sliced[0], stimulied_firing[0], ms_time
+
     def creating_stimulus_bins(self, stimulied_firing, stimtrig_sliced, stimtime_sliced, stimulus_selection = 0):
         initial_stimulus = stimtime_sliced[stimulus_selection]
         next_stimulus = stimtime_sliced[stimulus_selection+1]
         total = 0
         ms_bin = []
+        ms_time = [initial_stimulus]
         random_list = stimulied_firing[stimulus_selection+1].copy()
         item = random_list.pop(0)
         while initial_stimulus <= next_stimulus:
@@ -200,21 +294,33 @@ class GraphingApplication:
                     false_flag = False
             ms_bin.append(total)
             initial_stimulus+=0.001
+            ms_time.append(initial_stimulus)
             total = 0
         del random_list
-        return stimtrig_sliced[stimulus_selection], ms_bin, stimtime_sliced[stimulus_selection], stimulied_firing[stimulus_selection+1]
+        return stimtrig_sliced[stimulus_selection], ms_bin, stimtime_sliced[stimulus_selection], stimulied_firing[stimulus_selection+1], ms_time
 
     def all_stimulus_in_specific_trial(self, trial):
+        trial = int(trial)
         stimulied_firing, baseline_bins, baseline_firings = self.baseline_statistics(trial)
         stimulus_ms_bins_dictionary = {}
         stimulus_time_dictionary = {}
         firings_during_stimulus = {}
+        ms_time_dictionary = {}
         for x in range(0,10):
-            stimulus_type, bin, type_time, stimulus_firings_list = self.creating_stimulus_bins(stimulied_firing, self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-10:self.dictionary_marking_0s_index_in_stimuli_lists[trial]+1], self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-10:self.dictionary_marking_0s_index_in_stimuli_lists[trial]+1], x)
+            stimulus_type, bin, type_time, stimulus_firings_list, ms_time = self.creating_stimulus_bins(stimulied_firing, self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-10:self.dictionary_marking_0s_index_in_stimuli_lists[trial]+1], self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-10:self.dictionary_marking_0s_index_in_stimuli_lists[trial]+1], x)
             stimulus_ms_bins_dictionary[stimulus_type] = bin
             stimulus_time_dictionary[stimulus_type] = type_time
             firings_during_stimulus[stimulus_type] = stimulus_firings_list
-        return stimulus_ms_bins_dictionary, stimulied_firing, stimulus_time_dictionary, baseline_firings, firings_during_stimulus
+            ms_time_dictionary[stimulus_type] = ms_time
+        if trial == 1:
+            ms_bin_initial,start,firings_during_initial,ms_time_initial = self.creating_stimulus_bins_before_first_stimulus(stimulied_firing, self.stimuli_time[0:self.dictionary_marking_0s_index_in_stimuli_lists[trial]+1], True)
+        else:
+            ms_bin_initial,start,firings_during_initial,ms_time_initial = self.creating_stimulus_bins_before_first_stimulus(stimulied_firing, self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-11:self.dictionary_marking_0s_index_in_stimuli_lists[trial]+1])
+        stimulus_ms_bins_dictionary[0] = ms_bin_initial
+        stimulus_time_dictionary[0] = start
+        firings_during_stimulus[0] = firings_during_initial
+        ms_time_dictionary[0] = ms_time_initial
+        return stimulus_ms_bins_dictionary, stimulied_firing, stimulus_time_dictionary, baseline_firings, firings_during_stimulus, ms_time_dictionary
 
     # No. of firings, length of experiment (s), average frequency of firings (Hz)
     def give_statistics_all_trials(self):
