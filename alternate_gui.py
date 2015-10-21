@@ -16,8 +16,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
-
-import time
+from matplotlib import style
 
 __Version__ = "0.4.4"
 # Edit this whenever you make a change, help us keep track.
@@ -32,6 +31,7 @@ if sys.platform == ("win32" or "cygwin"):
 
 elif sys.platform == "darwin":
     platform_filename = '/'
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -88,7 +88,7 @@ class Application(tk.Frame):
 
         # View Cascade
         self.view_menu = tk.Menu(self.menu, tearoff=False)
-        self.view_menu.add_command(label='Placeholder', command=None)
+        self.view_menu.add_command(label='Graph Window', command=self.view_new_file_window)
 
         self.menu.add_cascade(label='View', menu=self.view_menu)
 
@@ -444,6 +444,10 @@ class Application(tk.Frame):
         if self.list_of_open_files.size() > 0:
             self.highlighted = self.list_of_open_files.get(self.list_of_open_files.curselection())
 
+    def view_new_file_window(self):
+        temp_var = NewWindow(file=None, file_name=None, process_type='0')
+        temp_var.start()
+
     # Unfinished
     def new_file_window(self):
         if self.highlighted not in self.opened_files.keys() and self.highlighted is not None:
@@ -496,10 +500,13 @@ class SeparateWindowFile(tk.Frame):
 
         # File Cascade
         self.file_menu = tk.Menu(self.menu, tearoff=False)
+        self.file_menu.add_command(label='Browse', command=self.browse_file)
+        self.file_menu.add_separator()
         self.file_menu.add_command(label='Settings...', command=None)
-        self.menu.add_cascade(label='File', menu=self.file_menu)
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Exit', command=self.quit)
+
+        self.menu.add_cascade(label='File', menu=self.file_menu)
 
         # Help Cascade
         self.help_menu = tk.Menu(self.menu, tearoff=False)
@@ -549,6 +556,22 @@ class SeparateWindowFile(tk.Frame):
         self.trial_listbox.grid(row=1, column=0, sticky='ns', padx=1, pady=1)
         self.trials.grid(row=1, column=1, sticky='ns', padx=1, pady=1)
         self.image_panel.get_tk_widget().grid(row=1, column=2, sticky='nsew', padx=0, pady=0)
+
+    # Finished : Working
+    def browse_file(self):
+        self.trial_listbox.delete(0, self.trial_listbox.size())
+        files = filedialog.askopenfilename(filetypes=(('MatLab Files', '*.mat'),))
+        if files != '':
+            self.file = files
+            self.file_name = self.file.split('/')
+            self.file_name = self.file_name[-1]
+            self.master.title('Trial Viewer ({})'.format(self.file_name))
+            temp = graphing_api.GraphingApplication()
+            temp.open_file(self.file)
+            self.number_trials = temp.number_trials+1
+            for x in range(1, self.number_trials):
+                self.trial_listbox.insert('end', str(x))
+
 
     def trial_selected(self, event):
         widget = event.widget
@@ -675,7 +698,8 @@ class NewWindow(Process):
     def __init__(self, process_type, file=None, file_name=None, trial=None):
         Process.__init__(self)
         self.mat_lab = graphing_api.GraphingApplication()
-        self.mat_lab.open_file(file)
+        if file is not None:
+            self.mat_lab.open_file(file)
         self.number_of_trials = self.mat_lab.number_trials
         self.trial = trial
 
