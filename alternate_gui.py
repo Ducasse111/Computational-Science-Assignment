@@ -18,7 +18,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from matplotlib import style
 
-__Version__ = "0.4.4"
+__Version__ = "0.5.1"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
@@ -59,6 +59,7 @@ class Application(tk.Frame):
 
         self.dictionary = {}
         self.mat = {}
+        self.docs_generated = False
 
         '''------------------
         Widget Instantiations
@@ -92,7 +93,11 @@ class Application(tk.Frame):
 
         self.menu.add_cascade(label='View', menu=self.view_menu)
 
-        # Help Cascade
+        #####################################################
+        # Help/Documentation
+        #####################################################
+
+
         def display_about():
             text = "Created by:\n" \
                    "Ben Witney\n" \
@@ -108,8 +113,66 @@ class Application(tk.Frame):
                    "Version: "
             messagebox.showinfo(message=text + __Version__, title='About', icon='info')
 
+        def display_documentation():
+
+            DocWin = tk.Toplevel()
+            DocWin.title("Documentation")
+            self.Subject_select = tk.Listbox(DocWin, yscrollcommand=self.file_viewer.set, activestyle='none',
+                                             width=24, selectmode='single', exportselection=False, highlightthickness=0)
+            self.display_info = tk.Text(DocWin, wrap=tk.WORD, state = tk.DISABLED)
+            self.Subject_select.bind('<<ListboxSelect>>',Change_text)
+
+
+            self.Subject_select.grid(row=0, column=0, sticky='nsew', padx=1, pady=1)
+            self.display_info.grid(row=0, column=1, sticky='nsew', padx=1, pady=1)
+
+            DocWin.rowconfigure(0, weight=1)
+            DocWin.columnconfigure(0, weight=1)
+            DocWin.columnconfigure(1, weight=10)
+
+            if self.docs_generated == False:
+                fill_list = []
+                if sys.platform == ("win32" or "cygwin"):
+                    self.docs = 'Documentation\\'
+                elif sys.platform == "darwin":
+                    self.docs = 'Documentation/'
+
+                text_files = open(self.docs+"text", "r")
+                text_files = text_files.read()
+                text_files = text_files.split("$")
+                print(text_files)
+
+                for x in range(len(text_files)):
+                    try:
+                        if text_files[x][0] == "@":
+                            fill_list.append((text_files[x][1:],text_files[x+1]))
+                    except IndexError:
+                        pass #i'm sorry :(
+
+
+                self.doc_dict = dict(fill_list)
+
+
+                for item in self.doc_dict:
+                    self.Subject_select.insert(tk.END, item)
+
+
+
+                self.docs_generated = True
+        def Change_text(event):
+            print(self.Subject_select.curselection())
+            self.display_info.config(state=tk.NORMAL)
+            self.display_info.delete(1.0, tk.END)
+            self.display_info.insert(tk.END, self.doc_dict[self.Subject_select.get(self.Subject_select.curselection())])
+            self.display_info.config(state=tk.DISABLED)
+
+
+
+
+
         self.help_menu = tk.Menu(self.menu, tearoff=False)
         self.help_menu.add_command(label='About', command=display_about)
+        self.help_menu.add_command(label='Documentation', command=display_documentation)
 
         self.menu.add_cascade(label='Help', menu=self.help_menu)
 
