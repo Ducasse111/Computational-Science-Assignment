@@ -14,11 +14,10 @@ from multiprocessing import Process
 
 matplotlib.use('TkAgg')
 
-__Version__ = "0.5.2"
+__Version__ = "0.6.0"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
-#           we change a when we are feature complete <-- real term, means we have all base features we need
-#           we change b when we add a new feature
+#           we change a when we are feature complete
 #           we change c when whenever we do a small fix
 
 platform_filename = ''
@@ -33,7 +32,7 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
         self.master = master
-        self.master.title('Tkinter GUI Rewrite V' + __Version__)
+        self.master.title('Neuroscience GUI V' + __Version__)
         self.grid()
 
         self.selected_file = None
