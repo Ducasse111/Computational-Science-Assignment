@@ -482,6 +482,8 @@ class GraphingApplication:
     # ms bins analysis #
     ####################
 
+    # Functions are same as the 10 ms bins analysis functions, but these create & use 1 ms bin functions
+
     def baseline_statistics(self, trial):
         trial = int(trial)
         temporary_list = []
@@ -713,7 +715,3 @@ class GraphingApplication:
                    len(self.trialled_firing[trial-1])/(self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]]-self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-11]),\
                    self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial-1]+1:self.dictionary_marking_0s_index_in_stimuli_lists[trial]],\
                    self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[trial-1]+1:self.dictionary_marking_0s_index_in_stimuli_lists[trial]]
-
-    # Maybe PDF is of whole trial, find probability (integration) for baseline & stimuli
-    def probability_density_function(self, mtrial):
-        return
