@@ -1,22 +1,19 @@
 import sys
-import os
-
 import tkinter as tk
 import scipy.io as sc_io
+import graphing_api
+import matplotlib
+import os
+
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 from tkinter import messagebox
 from tkinter import filedialog
 from tkinter import ttk
-
 from PIL import Image, ImageTk
-
-import graphing_api
 from multiprocessing import Process
 
-import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
-from matplotlib.figure import Figure
-from matplotlib import style
 
 __Version__ = "0.5.1"
 # Edit this whenever you make a change, help us keep track.
@@ -83,7 +80,7 @@ class Application(tk.Frame):
         self.file_menu.add_separator()
         self.file_menu.add_command(label='Settings...', command=None)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label='Exit', command=self.quit)
+        self.file_menu.add_command(label='Exit', command=self.close)
 
         self.menu.add_cascade(label='File', menu=self.file_menu)
 
@@ -96,7 +93,6 @@ class Application(tk.Frame):
         #####################################################
         # Help/Documentation
         #####################################################
-
 
         def display_about():
             text = "Created by:\n" \
@@ -112,7 +108,6 @@ class Application(tk.Frame):
                    "\n" \
                    "Version: "
             messagebox.showinfo(message=text + __Version__, title='About', icon='info')
-
         def display_documentation():
 
             DocWin = tk.Toplevel()
@@ -165,10 +160,6 @@ class Application(tk.Frame):
             self.display_info.delete(1.0, tk.END)
             self.display_info.insert(tk.END, self.doc_dict[self.Subject_select.get(self.Subject_select.curselection())])
             self.display_info.config(state=tk.DISABLED)
-
-
-
-
 
         self.help_menu = tk.Menu(self.menu, tearoff=False)
         self.help_menu.add_command(label='About', command=display_about)
@@ -278,19 +269,18 @@ class Application(tk.Frame):
 
         # Grid instantiations
 
-
         self.scrollbar_toolbar.grid(row=0,             column=0, sticky='ew')
         self.file_text.grid(row=0,                     column=4, sticky='nsw', padx=1, pady=1)
         self.trial_text.grid(row=0,                    column=5, sticky='nsew', padx=1, pady=1)
-        self.list_of_open_files.grid(row=1, rowspan=2, column=0, sticky='ns', padx=1, pady=1)
+        self.list_of_open_files.grid(row=1, rowspan=2, column=0, sticky='ns', padx=2, pady=1)
         self.file_viewer.grid(row=1,        rowspan=2, column=1, sticky='ns', padx=1, pady=1)
         self.trial_listbox.grid(row=1,      rowspan=2, column=2, sticky='ns', padx=1, pady=1)
         self.trials.grid(row=1,             rowspan=2, column=3, sticky='ns', padx=2, pady=1)
-        self.display_trial_text.grid(row=0, columnspan=2, column=6, sticky='nsew', padx=2, pady=1)
+        self.display_trial_text.grid(row=0, columnspan=2, column=6, sticky='nsew', padx=1, pady=1)
         self.image_panel.get_tk_widget().grid(row=1,     columnspan=3, column=4, sticky='nsew')
-        self.empty_frame = tk.Frame(self, width=3)
+        self.empty_frame = tk.Frame(self, width=2)
         self.empty_frame.grid(row=1, rowspan=1, column=7, sticky='nsew')
-        self.empty_frame = tk.Frame(self, height=3)
+        self.empty_frame = tk.Frame(self, height=2)
         self.empty_frame.grid(row=2, column=4, columnspan=7, sticky='nsew')
 
         # Widget sticky and weighting
@@ -385,6 +375,15 @@ class Application(tk.Frame):
         self.tk.call(self.image_panel.get_tk_widget(), 'delete', 1, 1)
         del self.figure
         del self.image_panel
+        self.number_trials = 0
+
+        self.stimuli_time = []
+        self.stimuli_code = []
+        self.firing = []
+        self.trialled_firing = []
+
+        self.dictionary = {}
+        self.mat = {}
 
         self.figure = Figure(figsize=(9, 6), dpi=100)
         self.image_panel = FigureCanvasTkAgg(self.figure, self)
@@ -503,15 +502,17 @@ class Application(tk.Frame):
             self.a = self.figure.add_subplot(111)
             self.image_panel.get_tk_widget().grid(row=1, columnspan=3, column=4, sticky='nsew')
 
+    # Finished : Working
     def set_active(self, event):
         if self.list_of_open_files.size() > 0:
             self.highlighted = self.list_of_open_files.get(self.list_of_open_files.curselection())
 
+    # Finished : Working
     def view_new_file_window(self):
-        temp_var = NewWindow(file=None, file_name=None, process_type='0')
-        temp_var.start()
+        self.opened_files[str(len([self.opened_files.keys()]))] = NewWindow(file=None, file_name=None, process_type='0')
+        self.opened_files[str(len([self.opened_files.keys()]))].start()
 
-    # Unfinished
+    # Finished : Working
     def new_file_window(self):
         if self.highlighted not in self.opened_files.keys() and self.highlighted is not None:
             self.opened_files[self.highlighted] = NewWindow(file=self.listbox_data[self.highlighted],
@@ -522,6 +523,11 @@ class Application(tk.Frame):
                 self.opened_files[self.highlighted] = NewWindow(file=self.listbox_data[self.highlighted],
                                                                 file_name=self.highlighted, process_type='0')
                 self.opened_files[self.highlighted].start()
+
+    def close(self):
+        for key in self.opened_files.keys():
+            self.opened_files[key].terminate()
+        self.quit()
 
 
 class SeparateWindowFile(tk.Frame):
@@ -589,6 +595,7 @@ class SeparateWindowFile(tk.Frame):
             self.trial_listbox.insert('end', str(x))
 
         self.trial_listbox.bind('<Double-1>', self.trial_selected)
+        self.trial_listbox.bind('<<ListboxSelect>>', self.set_active)
         self.trials.config(command=self.trial_listbox.yview)
 
         # Toolbar
@@ -606,7 +613,15 @@ class SeparateWindowFile(tk.Frame):
                                         command=self.analysis, relief='flat', padx=2, pady=2,
                                         overrelief='groove', anchor='center')
 
+        self.browse_image = Image.open(self.icon+'open.ico')
+        self.browse_image = self.browse_image.resize((14, 14), Image.ANTIALIAS)
+        self.tk_browse_image = ImageTk.PhotoImage(self.browse_image)
+        self.browse_file_button = tk.Button(self.scrollbar_toolbar, image=self.tk_browse_image,
+                                            command=self.browse_file, relief='flat', padx=2, pady=2,
+                                            overrelief='groove', anchor='center')
+
         ttk.Separator(self.scrollbar_toolbar, orient='vertical').pack(side='left', fill='y', padx=2)
+        self.browse_file_button.pack(side='left')
         self.analyse_button.pack(side='left')
 
         # Weight setup
@@ -616,15 +631,37 @@ class SeparateWindowFile(tk.Frame):
         # Grid Setup
         self.scrollbar_toolbar.grid(row=0, column=0, sticky='ew', pady=1)
         self.trial_text.grid(row=0, column=2, sticky='ew', padx=1, pady=1)
-        self.trial_listbox.grid(row=1, column=0, sticky='ns', padx=1, pady=1)
+        self.trial_listbox.grid(row=1, column=0, sticky='nsew', padx=2, pady=1)
         self.trials.grid(row=1, column=1, sticky='ns', padx=1, pady=1)
-        self.image_panel.get_tk_widget().grid(row=1, column=2, sticky='nsew', padx=0, pady=0)
+        self.image_panel.get_tk_widget().grid(row=1, column=2, sticky='nsew', padx=1, pady=0)
 
     # Finished : Working
     def browse_file(self):
-        self.trial_listbox.delete(0, self.trial_listbox.size())
         files = filedialog.askopenfilename(filetypes=(('MatLab Files', '*.mat'),))
         if files != '':
+            self.tk.call(self.image_panel.get_tk_widget(), 'delete', 1, 1)
+            self.trial_text.configure(text='Trial: ')
+            del self.figure
+            del self.image_panel
+
+            self.figure = Figure(figsize=(9, 6), dpi=100)
+            self.image_panel = FigureCanvasTkAgg(self.figure, self)
+            self.a = self.figure.add_subplot(111)
+
+            self.image_panel.get_tk_widget().grid(row=1, column=2, sticky='nsew', padx=0, pady=0)
+            self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
+
+            self.trial_listbox.delete(0, self.trial_listbox.size())
+            self.number_trials = 0
+
+            self.stimuli_time = []
+            self.stimuli_code = []
+            self.firing = []
+            self.trialled_firing = []
+
+            self.dictionary = {}
+            self.mat = {}
+
             self.file = files
             self.file_name = self.file.split('/')
             self.file_name = self.file_name[-1]
@@ -634,7 +671,6 @@ class SeparateWindowFile(tk.Frame):
             self.number_trials = temp.number_trials+1
             for x in range(1, self.number_trials):
                 self.trial_listbox.insert('end', str(x))
-
 
     def trial_selected(self, event):
         widget = event.widget
@@ -731,9 +767,16 @@ class SeparateWindowFile(tk.Frame):
         self.image_panel.get_tk_widget().configure(highlightthickness=0, relief='groove', borderwidth=0)
         # self.after(500, self.do_after)
 
-    def analysis(self, event):
+    def analysis(self):
+        print(self.highlighted)
         if self.highlighted is not None and self.highlighted not in self.active_analysis.keys():
-            self.active_analysis[str(self.highlighted)] = NewWindow(process_type='1', trial=self.highlighted)
+            self.active_analysis[str(self.highlighted)] = NewWindow(process_type='1',
+                                                                    trial=int(self.highlighted), file=self.file)
+            self.active_analysis[str(self.highlighted)].start()
+        elif self.highlighted is None:
+            self.active_analysis[self.file_name] = NewWindow(process_type='1',
+                                                             trial=int(self.highlighted), file=self.file)
+            self.active_analysis[self.file_name].start()
 
     def set_active(self, event):
         if self.trial_listbox.size() > 0:
@@ -742,12 +785,16 @@ class SeparateWindowFile(tk.Frame):
     def do_after(self):
         self.image_panel.get_tk_widget().delete('all')
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for key in self.active_analysis.keys():
+            self.active_analysis[key].terminate()
+        self.quit()
+
 
 class AnalysisWindow(tk.Frame):
     def __init__(self, file, trial, master=None):
         tk.Frame.__init__(self, master)
         self.master = master
-
 
         self.file = file
         self.file_name = self.file.split()[:-1]
@@ -756,14 +803,54 @@ class AnalysisWindow(tk.Frame):
         self.graphing_object = graphing_api.GraphingApplication()
         self.graphing_object.open_file(self.file)
 
+        # Toolbar
+        self.menu = tk.Menu(self.master)
+
+        try:
+            self.master.config(menu=self.menu)
+        except AttributeError:
+            # master is a top-level window (Python 1.4/Tkinter 1.63)
+            self.master.tk.call(master, "config", "-menu", self.menu)
+
+        # File Cascade
+        self.file_menu = tk.Menu(self.menu, tearoff=False)
+        self.file_menu.add_command(label='Browse', command=None)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label='Settings...', command=None)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label='Exit', command=self.quit)
+
+        self.menu.add_cascade(label='File', menu=self.file_menu)
+
+        # Help Cascade
+        self.help_menu = tk.Menu(self.menu, tearoff=False)
+        self.help_menu.add_command(label='About', command=None)
+
+        self.menu.add_cascade(label='Help', menu=None)
+
+        # Tkinter widgets
+        self.trials = tk.Scrollbar(self)
+
+        self.trial_listbox = tk.Listbox(self, yscrollcommand=self.trials.set, width=6, height=36, activestyle='none',
+                                        selectmode='single', exportselection=False, highlightthickness=0)
+        self.trials.config(command=self.trial_listbox.yview)
+        self.trial_listbox.bind('<Double-1>', None)
+
+        # Grid Instantiations
+
+        self.trial_listbox.grid(row=0, column=0, sticky='ns')
+        self.trials.grid(row=0, column=1, sticky='ns')
+
 
 class NewWindow(Process):
     def __init__(self, process_type, file=None, file_name=None, trial=None):
         Process.__init__(self)
         self.mat_lab = graphing_api.GraphingApplication()
-        if file is not None:
+        if process_type == '0' and file is not None:
             self.mat_lab.open_file(file)
-        self.number_of_trials = self.mat_lab.number_trials
+            self.number_of_trials = self.mat_lab.number_trials
+        else:
+            self.number_of_trials = 0
         self.trial = trial
 
         self.file = file
@@ -771,13 +858,17 @@ class NewWindow(Process):
         self.type = process_type
 
     def run(self):
+        self.root = tk.Tk()
         if self.type == '0':
-            self.root = tk.Tk()
-            self.my_application = SeparateWindowFile(self.root, self.number_of_trials, self.file, self.file_name)
-            self.my_application.pack(fill='both', expand=True)
-            self.my_application.mainloop()
+            self.my_application = SeparateWindowFile(master=self.root, num_trials=self.number_of_trials,
+                                                     file=self.file, file_name=self.file_name)
         elif self.type == '1':
-            self.root = tk.Tk()
-            self.my_application = AnalysisWindow(self.file, self.trial)
-            self.my_application.pack(fill='both', expand=True)
-            self.my_application.mainloop()
+            self.my_application = AnalysisWindow(master=self.root, file=self.file, trial=self.trial)
+        self.my_application.pack(fill='both', expand=True)
+        self.my_application.mainloop()
+
+    def terminate(self):
+        if self.type == '0':
+            for key in self.my_application.active_analysis.keys():
+                self.my_application.active_analysis[key].terminate()
+        self.terminate()
