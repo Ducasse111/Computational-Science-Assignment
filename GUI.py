@@ -17,7 +17,7 @@ matplotlib.use('TkAgg')
 __Version__ = "0.5.2"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
-#           we change a when we finish a complete feature
+#           we change a when we are feature complete <-- real term, means we have all base features we need
 #           we change b when we add a new feature
 #           we change c when whenever we do a small fix
 
@@ -117,48 +117,57 @@ class Application(tk.Frame):
             self.Subject_select.bind('<<ListboxSelect>>',Change_text)
 
 
+
+
             self.Subject_select.grid(row=0, column=0, sticky='nsew', padx=1, pady=1)
             self.display_info.grid(row=0, column=1, sticky='nsew', padx=1, pady=1)
 
             DocWin.rowconfigure(0, weight=1)
-            DocWin.columnconfigure(0, weight=1)
+            DocWin.columnconfigure(0, weight=0)
             DocWin.columnconfigure(1, weight=10)
 
-            if self.docs_generated == False:
-                fill_list = []
-                if sys.platform == ("win32" or "cygwin"):
-                    self.docs = 'Documentation\\'
-                elif sys.platform == "darwin":
-                    self.docs = 'Documentation/'
 
-                text_files = open(self.docs+"text", "r")
-                text_files = text_files.read()
-                text_files = text_files.split("$")
-                print(text_files)
+            fill_list = []
+            if sys.platform == ("win32" or "cygwin"):
+                self.docs = 'Documentation\\'
+            elif sys.platform == "darwin":
+                self.docs = 'Documentation/'
+            self.doc_image = tk.Label(DocWin, image = ImageTk.PhotoImage(Image.open(self.docs+"Layout.png")))
 
-                for x in range(len(text_files)):
-                    try:
-                        if text_files[x][0] == "@":
-                            fill_list.append((text_files[x][1:],text_files[x+1]))
-                    except IndexError:
-                        pass #i'm sorry :(
+            text_files = open(self.docs+"text", "r")
+            text_files = text_files.read()
+            text_files = text_files.split("$")
+            print(text_files)
 
+            for x in range(len(text_files)):
+                try:
+                    if text_files[x][0] == "@":
+                        fill_list.append((text_files[x][1:],text_files[x+1]))
 
-                self.doc_dict = dict(fill_list)
-
-
-                for item in self.doc_dict:
-                    self.Subject_select.insert(tk.END, item)
+                except IndexError:
+                    pass #i'm sorry :(
 
 
+            self.doc_dict = dict(fill_list)
 
-                self.docs_generated = True
+
+            for item in self.doc_dict:
+                self.Subject_select.insert(tk.END, item)
+
+
+
+
         def Change_text(event):
-            print(self.Subject_select.curselection())
-            self.display_info.config(state=tk.NORMAL)
-            self.display_info.delete(1.0, tk.END)
-            self.display_info.insert(tk.END, self.doc_dict[self.Subject_select.get(self.Subject_select.curselection())])
-            self.display_info.config(state=tk.DISABLED)
+                self.display_info.config(state=tk.NORMAL)
+                self.display_info.delete(1.0, tk.END)
+                curr_selection = self.Subject_select.get(self.Subject_select.curselection())
+                content = self.doc_dict[self.Subject_select.get(self.Subject_select.curselection())]
+                self.display_info.insert(tk.END, content)
+                self.display_info.config(state=tk.DISABLED)
+
+
+
+
 
         self.help_menu = tk.Menu(self.menu, tearoff=False)
         self.help_menu.add_command(label='About', command=display_about)
