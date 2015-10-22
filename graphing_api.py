@@ -715,3 +715,5 @@ class GraphingApplication:
                    len(self.trialled_firing[trial-1])/(self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]]-self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial]-11]),\
                    self.stimuli_time[self.dictionary_marking_0s_index_in_stimuli_lists[trial-1]+1:self.dictionary_marking_0s_index_in_stimuli_lists[trial]],\
                    self.stimuli_code[self.dictionary_marking_0s_index_in_stimuli_lists[trial-1]+1:self.dictionary_marking_0s_index_in_stimuli_lists[trial]]
+
+    # AND HIS NAME IS JOHN CENA!!!!!!!!!!!
