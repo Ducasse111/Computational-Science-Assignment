@@ -1,4 +1,23 @@
-@Layout$This is where i will put an image, and make a key for what each button does
+@Layout$Above the listbox on the left, there is a row of 5 buttons. From left to right these are:
+1: Browse
+2: Delete Entry
+3: Move Up
+4: Move Down
+5: Open Seperate Window
+
+Browse:
+Opens a file browser, and allows the user to navigate to the files containing the data.
+
+Delete Entry:
+Removes an entry from the list of open entries.
+
+Move Buttons:
+Changes the position of items in the list of open entries.
+
+Open Seperate Window:
+It is through this window that analysis takes place, using the analyse button on the top left.
+
+
 
 $@How it works$This is where we WOULD explain how the math behind the analysis works.
 
