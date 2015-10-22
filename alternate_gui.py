@@ -3,7 +3,6 @@ import tkinter as tk
 import scipy.io as sc_io
 import graphing_api
 import matplotlib
-import os
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -15,7 +14,7 @@ from multiprocessing import Process
 
 matplotlib.use('TkAgg')
 
-__Version__ = "0.5.1"
+__Version__ = "0.5.2"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we finish a complete feature
@@ -866,9 +865,3 @@ class NewWindow(Process):
             self.my_application = AnalysisWindow(master=self.root, file=self.file, trial=self.trial)
         self.my_application.pack(fill='both', expand=True)
         self.my_application.mainloop()
-
-    def terminate(self):
-        if self.type == '0':
-            for key in self.my_application.active_analysis.keys():
-                self.my_application.active_analysis[key].terminate()
-        self.terminate()
