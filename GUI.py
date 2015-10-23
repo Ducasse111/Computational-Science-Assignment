@@ -14,7 +14,7 @@ from multiprocessing import Process
 
 matplotlib.use('TkAgg')
 
-__Version__ = "0.6.1"
+__Version__ = "0.6.2"
 # Edit this whenever you make a change, help us keep track.
 #           for a.b.c
 #           we change a when we are feature complete
